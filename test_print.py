@@ -18,9 +18,9 @@ FICHIER_PRN = config['CHEMINS']['FICHIER_PRN'] # Fichier PNR
 NOM_IMPRIMANTE = config['IMPRIMANTE']['NOM_IMPRIMANTE'] # Nom de l'imprimante
 DATAM_GAUCHE_SKELETON = config['IMPRESSION']['DATAMATRIXBOX'] # %LEFT%
 DATAM_DROITE_SKELETON = config['IMPRESSION']['DATAMATRIXCONTENT'] # %RIGHT%
-PNR_SKELETON = config['IMPRESSION']['PNR'] #%PNR% 
-SER_SKELETON = config['IMPRESSION']['SER']#SER%
-CSN_SKELETON = config['IMPRESSION']['CSN']# %CSN%
+PNR_SKELETON = config['IMPRESSION']['PNR'] # %PNR% 
+SER_SKELETON = config['IMPRESSION']['SER'] # %SER%
+CSN_SKELETON = config['IMPRESSION']['CSN'] # %CSN%
 DATAM_DROITE_TEST = config['IMPRESSION']['DATAMATRIXCONTENT_TEST']
 DATAM_GAUCHE_TEST = config['IMPRESSION']['DATAMATRIXBOX_TEST']
 
@@ -36,7 +36,11 @@ ser_datam = None
 csn_datam = None
 datamdroite = None
 datamgauche = None
+
+nouveau_fichier = None
+
 aujourdhui = datetime.datetime.now() 
+
 def Recherche_Infos_DataMatrix():
     global pnr_datam, amdt_datam, ser_datam, csn_datam
     pnr_datam = DATAM_GAUCHE_TEST[42:53]
@@ -50,10 +54,9 @@ def Recherche_Infos_DataMatrix():
 
 
 def Recherche_Infos_SKELETON():
-    global pnr_skeleton, ser_skeleton, CSN_skeleton
-    global datamgauche_skeleton, datamdroite_skeleton
-    global pnr_datam, ser_datam, csn_datam
-    global datamdroite, datamgauche
+    global pnr_skeleton, ser_skeleton, CSN_skeleton, datamgauche_skeleton, datamdroite_skeleton
+    global pnr_datam, ser_datam, csn_datam, datamdroite, datamgauche
+    global nouveau_fichier
 
     with open(FICHIER_PRN, "r") as fichier:
         contenu = fichier.read()
@@ -100,30 +103,37 @@ def Recherche_Infos_SKELETON():
             break
 
  
-    timestamp = aujourdhui.strftime("%Y%m%d_%H%M%S")
-    nouveau_fichier = os.path.join(os.path.dirname(FICHIER_PRN),f"{timestamp}.prn")
+    
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    nouveau_fichier = os.path.join(os.path.dirname(FICHIER_PRN), f"{timestamp}.prn")
     with open(nouveau_fichier, "w") as fichier:
         fichier.write(nouveau_contenu)
-    print(f"Nouveau fichier enregistré : {nouveau_fichier}")
-def Impression() : 
-    z = Zebra()
 
-    try : 
-        z.getqueues().index(NOM_IMPRIMANTE)
-        
-    except ValueError : 
-        print("L'imprimante n'a pas été trouvée: " + NOM_IMPRIMANTE)
-    else:
-        z.setqueue(NOM_IMPRIMANTE)
-        impression = Lire_PRN
-        z.output(impression)
-        print("L'impression est réalisée")
-        Ouvrir_PRN.close()
+
+def Impression() : 
+    global nouveau_fichier
+    with open(nouveau_fichier, "r") as contenu:
+        print(contenu)
+        z = Zebra()
+        try:
+            z.getqueues().index(NOM_IMPRIMANTE)
+        except ValueError:
+            print("Printer Not Found: " + NOM_IMPRIMANTE)
+            input("\nPress enter to continue...")
+        else:
+            z.setqueue(NOM_IMPRIMANTE)
+            z.output(contenu)   
+            print("Impression envoyée")
+
+
+
 
 
 
 Recherche_Infos_DataMatrix()
 Recherche_Infos_SKELETON()
+Impression()
+
     
 
 
