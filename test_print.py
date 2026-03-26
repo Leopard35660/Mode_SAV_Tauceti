@@ -31,7 +31,6 @@ datamgauche_skeleton = None
 datamdroite_skeleton =None
 
 pnr_datam = None
-amdt_datam = None
 ser_datam = None
 csn_datam = None
 datamdroite = None
@@ -42,14 +41,12 @@ nouveau_fichier = None
 aujourdhui = datetime.datetime.now() 
 
 def Recherche_Infos_DataMatrix():
-    global pnr_datam, amdt_datam, ser_datam, csn_datam
-    pnr_datam = DATAM_GAUCHE_TEST[42:53]
+    global pnr_datam, ser_datam, csn_datam
+    pnr_datam = DATAM_GAUCHE_TEST[42:53] # A modifier avec le DATAM IHM
     print(pnr_datam)
-    amdt_datam = DATAM_GAUCHE_TEST[53]
-    print(amdt_datam)
-    ser_datam = DATAM_GAUCHE_TEST[:12]
+    ser_datam = DATAM_GAUCHE_TEST[:12] # A modifier avec le DATAM IHM
     print(ser_datam)
-    csn_datam = DATAM_DROITE_TEST[24:30]
+    csn_datam = DATAM_DROITE_TEST[52:58] # A modifier avec le DATAM IHM
     print(csn_datam)
 
 
@@ -108,25 +105,25 @@ def Recherche_Infos_SKELETON():
     nouveau_fichier = os.path.join(os.path.dirname(FICHIER_PRN), f"{timestamp}.prn")
     with open(nouveau_fichier, "w") as fichier:
         fichier.write(nouveau_contenu)
+    print("nouveau :", nouveau_fichier)
 
 
 def Impression() : 
     global nouveau_fichier
-    with open(nouveau_fichier, "r") as contenu:
-        print(contenu)
-        z = Zebra()
-        try:
-            z.getqueues().index(NOM_IMPRIMANTE)
-        except ValueError:
-            print("Printer Not Found: " + NOM_IMPRIMANTE)
-            input("\nPress enter to continue...")
-        else:
-            z.setqueue(NOM_IMPRIMANTE)
-            z.output(contenu)   
-            print("Impression envoyée")
-
-
-
+    ouvrir_prn = open(nouveau_fichier)
+    lire_prn = ouvrir_prn.read()
+    print(lire_prn)
+    ouvrir_prn.close()
+    z = Zebra()
+    try: 
+        z.getqueues().index(NOM_IMPRIMANTE)
+    except ValueError : 
+        print(f"Imprimante non trouvée {NOM_IMPRIMANTE}" )
+    else : 
+        z.setqueue(NOM_IMPRIMANTE)
+        imprimer = lire_prn
+        z.output(imprimer)
+        
 
 
 
