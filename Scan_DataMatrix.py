@@ -57,6 +57,7 @@ def Afficher_Matricule_Nom():
             Droit_Matricule = int(i[2])
             if Droit_Matricule < 3:
                 messagebox.showerror("Matricule", "Vous n'avez pas les droits pour continuer.")
+                Infos_Matricule.delete(END,0)         
                 return
             messagebox.showinfo("Matricule", f"Matricule : {i[0]} \n Nom : {i[1]}")
             Matricule_trouve = True
@@ -96,7 +97,7 @@ App_Scan.geometry("400x100") # Taille initiale de la fenêtre poue la saisie du 
 
 Frame_Matricule = Frame(App_Scan)
 Frame_Matricule.place(x=0, y=0, relwidth=1, relheight=1)
-Infos_Matricule = StringVar() #Variable pour stocker le matricule saisi par l'utilisateur
+Infos_Matricule = StringVar()
 
 Matricule_title = Label(Frame_Matricule, text="Entrez votre matricule :", font=("Arial", 10)) 
 Matricule_title.place(x=10, y=30)
