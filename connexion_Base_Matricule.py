@@ -15,12 +15,14 @@ config.read(configscanini)
 
 CHEMIN_DATABASE = config['CHEMINS']['CHEMIN_DATABASE'] 
 NOM_DATABASE = config['NOM']['NOM_DATABASE']
+db_path = os.path.join(CHEMIN_DATABASE, NOM_DATABASE)
+print("DB PATH =", db_path)
 
 try : 
-    connexion = pyodbc.connect(r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};"r"DBQ=" + CHEMIN_DATABASE + "\\" + NOM_DATABASE)
+    connexion = pyodbc.connect(r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};"r"DBQ=" + db_path)
     cursor = connexion.cursor()
-    cursor.execute("SELECT matricule, name, right FROM t_users")
-    row = cursor.fetchall()  # Récupère TOUS les résultats dans row
+    cursor.execute("SELECT matricule, name, rights FROM [t_users]")
+    row = cursor.fetchall()  # Récupère TOUS les résultats dans la base
     print("row", row)
     
     
