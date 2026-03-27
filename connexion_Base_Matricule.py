@@ -19,14 +19,13 @@ NOM_DATABASE = config['NOM']['NOM_DATABASE']
 try : 
     connexion = pyodbc.connect(r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};"r"DBQ=" + CHEMIN_DATABASE + "\\" + NOM_DATABASE)
     cursor = connexion.cursor()
-    cursor.execute("SELECT matricule, name FROM t_users")
+    cursor.execute("SELECT matricule, name, right FROM t_users")
     row = cursor.fetchall()  # Récupère TOUS les résultats dans row
-    # data_right = connexion.cursor()
-    # data_right.execute("SELECT right FROM t_users")
-    # row_right = data_right.fetchall()
+    print("row", row)
+    
     
 except Exception as e:
     print("Erreur lors de la connexion à la base de données : ", e)
     row = []
-    # row_right = []
+    
 

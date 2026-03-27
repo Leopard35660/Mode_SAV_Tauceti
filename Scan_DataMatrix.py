@@ -21,6 +21,8 @@ BDD_matricule = None
 DateTime_verification = None
 prenom = None
 nom = None
+right = None
+nom_trouve = False
 
 def MATRICULE_SAISIE():
     global CARACTERE_MATRICULE_MAX, Matricule_saisie
@@ -31,31 +33,41 @@ def MATRICULE_SAISIE():
         Matricule_saisie.config(fg="red")
 
 def Afficher_Matricule_Nom():
-    global nom_trouve_BDD, BDD_matricule, Matricule_trouve, nom_trouve, prenom, nom 
-
+    global nom_trouve_BDD, BDD_matricule, Matricule_trouve, nom_trouve, prenom, nom, right 
+    
     Matricule_saisie = Infos_Matricule.get().strip()
+    print("Infos Matricule", Matricule_saisie)
 
     if not row:
         messagebox.showerror("Erreur", "Aucune donnée dans la base de données !")
         return
 
+    Matricule_trouve = False
+
     for i in row:
-        if Matricule_saisie == str(i[0]).strip(): # Comparer le matricule saisi avec les matricules de la base de données
+        Matricule = str(i[0]).strip()
+        if Matricule_saisie == Matricule:
             nom_trouve_BDD = i[1]
             prenom, nom = nom_trouve_BDD.split(" ", 1)
-            print(prenom)
-            print (nom)
-
             BDD_matricule = i[0]
             Nom_utilisateur_title.config(text=f"Nom : {nom}")
             Prenom_utilisateur_title.config(text=f"Prénom : {prenom}")
             Matricule_trouve_title.config(text=f"Matricule : {BDD_matricule}")
+            # Vérification des droits
+            Droit_Matricule = int(i[2])
+            if Droit_Matricule < 3:
+                messagebox.showerror("Matricule", "Vous n'avez pas les droits pour continuer.")
+                return
+            messagebox.showinfo("Matricule", f"Matricule : {i[0]} \n Nom : {i[1]}")
             Matricule_trouve = True
             nom_trouve = True
-            messagebox.showinfo("Matricule", f"Matricule : {i[0]} \n Nom : {i[1]}")
-            return 
+            break
 
-    messagebox.showerror("Erreur de saisie", "Matricule non trouvé dans la base de données.")
+    if not Matricule_trouve:
+        messagebox.showerror("Erreur de saisie", "Matricule non trouvé dans la base de données.")
+        return
+
+ 
 
 def Changer_la_taille_de_la_fenetre(): # Fonction pour changer la taille de la fenêtre pour scanner les balises
     App_Scan.geometry("1000x350")
@@ -69,7 +81,7 @@ def Changer_la_taille_de_la_fenetre(): # Fonction pour changer la taille de la f
 
 def Afficher_Frame_Scan ():
     Afficher_Matricule_Nom()
-    if nom_trouve and Matricule_trouve: # Si le nom et le matricule sont trouvés dans la base de données.
+    if nom_trouve and Matricule_trouve : # Si le nom et le matricule sont trouvés dans la base de données.
         Frame_Scan.tkraise() # Afficher la frame pour scanner les balises
         Changer_la_taille_de_la_fenetre() # Et changer sa taille
     else:
