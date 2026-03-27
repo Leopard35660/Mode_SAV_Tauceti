@@ -21,7 +21,12 @@ try :
     cursor = connexion.cursor()
     cursor.execute("SELECT matricule, name FROM t_users")
     row = cursor.fetchall()  # Récupère TOUS les résultats dans row
+    # data_right = connexion.cursor()
+    # data_right.execute("SELECT right FROM t_users")
+    # row_right = data_right.fetchall()
+    
 except Exception as e:
     print("Erreur lors de la connexion à la base de données : ", e)
     row = []
+    # row_right = []
 

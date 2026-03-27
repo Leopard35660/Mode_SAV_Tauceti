@@ -3,7 +3,6 @@ import sys
 from configparser import ConfigParser
 from connexion_Base_Matricule import *
 from tkinter import *
-from tkinter import Tk
 from tkinter import messagebox
 
 def resource_path(relative_path):
@@ -21,7 +20,7 @@ nom_trouve_BDD = None
 BDD_matricule = None
 DateTime_verification = None
 prenom = None
-nom =None
+nom = None
 
 def MATRICULE_SAISIE():
     global CARACTERE_MATRICULE_MAX, Matricule_saisie
@@ -79,9 +78,8 @@ def Afficher_Frame_Scan ():
 
 
 App_Scan = Tk()
-
 App_Scan.iconbitmap(resource_path('Images\\Asteelflash_icon.ico')) #Ajouter l'icône de l'application
-App_Scan.title("Vérification des fichiers OK") # Titre de l'application
+App_Scan.title("SAV ULTIMA") # Titre de l'application
 App_Scan.geometry("400x100") # Taille initiale de la fenêtre poue la saisie du matricule
 
 Frame_Matricule = Frame(App_Scan)
@@ -97,6 +95,7 @@ Matricule_saisie.bind("<KeyRelease>", lambda e: MATRICULE_SAISIE())
 Bouton_Valider = Button(Frame_Matricule, text="Valider", command=Afficher_Frame_Scan, bg="grey") 
 Bouton_Valider.place(x=300, y=70)
 
+
 # Centrer  la fenêtre 
 largeur_ecran = App_Scan.winfo_screenwidth()
 longueur_ecran = App_Scan.winfo_screenheight()
@@ -108,6 +107,14 @@ App_Scan.geometry('%dx%d+%d+%d' % (largeur, longueur, x, y))
 
 Frame_Scan = Frame(App_Scan)
 Frame_Scan.place(x=0, y=0, relwidth=1, relheight=1)
+DataMatrix_Carte = StringVar()
+DataMatrix_Batterie = StringVar()
+
+Image_Asteelflash = PhotoImage(file=resource_path("Images\\Asteelflash.png"))
+Image_Asteelflash_reduite = Image_Asteelflash.subsample(3,3)
+Label_Asteelflash_image = Label(Frame_Scan, image=Image_Asteelflash_reduite)
+Label_Asteelflash_image.place(x=3, y=2)
+
 Nom_utilisateur_title = Label (Frame_Scan, text=f"Nom : {nom}",font= ("Calibri", 10))
 Nom_utilisateur_title.place(x=800, y=10)
 Prenom_utilisateur_title = Label(Frame_Scan, text=f"Prenom : {prenom}", font=("Calibri", 10)) 
@@ -115,6 +122,15 @@ Prenom_utilisateur_title.place(x=782, y=30)
 Matricule_trouve_title = Label (Frame_Scan, text=f"Matricule : {BDD_matricule}",font= ("Calibri", 10))
 Matricule_trouve_title.place(x=770, y=50)
 
+DataMatrix_Carte_title = Label (Frame_Scan, text="CARTE :",font=("Arial", 24))
+DataMatrix_Carte_title.place(x=55, y= 100)
+DataMatrix_Carte_Entry = Entry (Frame_Scan, textvariable= DataMatrix_Carte, font=("Calibri", 24), width=48)
+DataMatrix_Carte_Entry.place(x= 200, y=95)
+
+DataMatrix_Batterie_title = Label(Frame_Scan, text="BATTERIE :", font=("Arial", 24))
+DataMatrix_Batterie_title.place(x=10, y= 200)
+DataMatrix_Batterie_Entry = Entry(Frame_Scan, textvariable= DataMatrix_Batterie, font=("Calibri", 24), width=48)
+DataMatrix_Batterie_Entry.place(x= 200, y=195)
 
 App_Scan.iconbitmap(resource_path('Images\\Asteelflash_icon.ico'))
 
