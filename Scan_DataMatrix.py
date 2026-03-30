@@ -2,6 +2,7 @@ import os
 import sys
 from configparser import ConfigParser
 from connect_t_users import *
+from connect_t_production import * 
 from tkinter import *
 from tkinter import messagebox
 
@@ -23,6 +24,11 @@ prenom = None
 nom = None
 right = None
 nom_trouve = False
+
+id_production = None
+lbl_carte = None
+lbl_batterie = None
+lbl_boitier = None
 
 def MATRICULE_SAISIE():
     global CARACTERE_MATRICULE_MAX, Matricule_saisie
@@ -68,7 +74,15 @@ def Afficher_Matricule_Nom():
         messagebox.showerror("Erreur de saisie", "Matricule non trouvé dans la base de données.")
         return
 
- 
+def Changer_la_taille_de_la_fenetre_Boitier(): # Fonction pour changer la taille de la fenêtre pour scanner les balises
+    App_Scan.geometry("600x350")
+    largeur_ecran = App_Scan.winfo_screenwidth()
+    longueur_ecran = App_Scan.winfo_screenheight()
+    largeur=500
+    longueur=200
+    x = (largeur_ecran/2) - (largeur/2)
+    y = (longueur_ecran/2) - (longueur/2)
+    App_Scan.geometry('%dx%d+%d+%d' % (largeur, longueur, x, y))
 
 def Changer_la_taille_de_la_fenetre(): # Fonction pour changer la taille de la fenêtre pour scanner les balises
     App_Scan.geometry("1000x350")
@@ -80,16 +94,37 @@ def Changer_la_taille_de_la_fenetre(): # Fonction pour changer la taille de la f
     y = (longueur_ecran/2) - (longueur/2)
     App_Scan.geometry('%dx%d+%d+%d' % (largeur, longueur, x, y))
 
-def Afficher_Frame_Scan ():
+    
+
+
+    
+
+def Afficher_Frame_Boitier() :
     Afficher_Matricule_Nom()
     if nom_trouve and Matricule_trouve : # Si le nom et le matricule sont trouvés dans la base de données.
-        Frame_Scan.tkraise() # Afficher la frame pour scanner les balises
-        Changer_la_taille_de_la_fenetre() # Et changer sa taille
+        Frame_Scan_Boitier.tkraise() # Afficher la frame pour scanner les balises
+        Changer_la_taille_de_la_fenetre_Boitier()
     else:
-        messagebox.showerror("Erreur", "Veuillez entrer un matricule valide")
+        messagebox.showerror("Erreur", "Veuillez entrer un matricule valide") 
 
+def Scan_Boitier() : 
+    Balise_scannee = DataMatrix_Boitier.get().strip()
+    print("Balise scanée :", Balise_scannee)
 
+    for i in t_production : 
+        id_production = i[0]
+        print("id", id_production)
+        lbl_carte = i[1]
+        print("lbl_carte :", lbl_carte)
+        lbl_batterie = i[2]
+        print("lbl_batterie :", lbl_batterie)
+        lbl_boitier = i[3]
+        print("lbl_boitier :", lbl_boitier)
 
+def Afficher_frame_scan_batterie_carte(): 
+    Scan_Boitier()
+
+        
 App_Scan = Tk()
 App_Scan.iconbitmap(resource_path('Images\\Asteelflash_icon.ico')) #Ajouter l'icône de l'application
 App_Scan.title("SAV ULTIMA") # Titre de l'application
@@ -105,11 +140,11 @@ Matricule_saisie = Entry(Frame_Matricule, textvariable=Infos_Matricule, font=("C
 Matricule_saisie.place(x=150, y=30)
 Matricule_saisie.bind("<KeyRelease>", lambda e: MATRICULE_SAISIE())
 
-Bouton_Valider = Button(Frame_Matricule, text="Valider", command=Afficher_Frame_Scan, bg="grey") 
+Bouton_Valider = Button(Frame_Matricule, text="Valider", command=Afficher_Frame_Boitier, bg="grey") 
 Bouton_Valider.place(x=300, y=70)
 
 
-# Centrer  la fenêtre 
+# Centrer la fenêtre 
 largeur_ecran = App_Scan.winfo_screenwidth()
 longueur_ecran = App_Scan.winfo_screenheight()
 largeur=400
@@ -117,6 +152,24 @@ longueur=100
 x = (largeur_ecran/2) - (largeur/2)
 y = (longueur_ecran/2) - (longueur/2)
 App_Scan.geometry('%dx%d+%d+%d' % (largeur, longueur, x, y))
+
+Frame_Scan_Boitier = Frame(App_Scan)
+Frame_Scan_Boitier.place(x=0, y=0, relwidth=1, relheight=1)
+DataMatrix_Boitier= StringVar()
+
+Nom_utilisateur_title = Label (Frame_Scan_Boitier, text=f"Nom : {nom}",font= ("Calibri", 10))
+Nom_utilisateur_title.place(x=400, y=10)
+Prenom_utilisateur_title = Label(Frame_Scan_Boitier, text=f"Prenom : {prenom}", font=("Calibri", 10)) 
+Prenom_utilisateur_title.place(x=382, y=30)
+Matricule_trouve_title = Label (Frame_Scan_Boitier, text=f"Matricule : {BDD_matricule}",font= ("Calibri", 10))
+Matricule_trouve_title.place(x=370, y=50)
+
+DataMatrix_Boitier_label = Label(Frame_Scan_Boitier, text= "Scannez le DataMatrix du boîtier : " )
+DataMatrix_Boitier_label.place(x=10, y=80)
+DataMatrix_Boitier_Entry = Entry(Frame_Scan_Boitier, textvariable=DataMatrix_Boitier, font=("Calibri", 12), width=58)
+DataMatrix_Boitier_Entry.place(x=10, y=110)
+Bouton_Valider = Button(Frame_Scan_Boitier, text="OK", command=Afficher_frame_scan_batterie_carte, bg="grey") 
+Bouton_Valider.place(x=450, y=140)
 
 Frame_Scan = Frame(App_Scan)
 Frame_Scan.place(x=0, y=0, relwidth=1, relheight=1)
@@ -127,13 +180,6 @@ Image_Asteelflash = PhotoImage(file=resource_path("Images\\Asteelflash.png"))
 Image_Asteelflash_reduite = Image_Asteelflash.subsample(3,3)
 Label_Asteelflash_image = Label(Frame_Scan, image=Image_Asteelflash_reduite)
 Label_Asteelflash_image.place(x=3, y=2)
-
-Nom_utilisateur_title = Label (Frame_Scan, text=f"Nom : {nom}",font= ("Calibri", 10))
-Nom_utilisateur_title.place(x=800, y=10)
-Prenom_utilisateur_title = Label(Frame_Scan, text=f"Prenom : {prenom}", font=("Calibri", 10)) 
-Prenom_utilisateur_title.place(x=782, y=30)
-Matricule_trouve_title = Label (Frame_Scan, text=f"Matricule : {BDD_matricule}",font= ("Calibri", 10))
-Matricule_trouve_title.place(x=770, y=50)
 
 DataMatrix_Carte_title = Label (Frame_Scan, text="CARTE :",font=("Arial", 24))
 DataMatrix_Carte_title.place(x=55, y= 100)
