@@ -1,33 +1,29 @@
-import pyodbc
 from configparser import ConfigParser
 import os
 import sys
+import mysql.connector
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__))) 
     return os.path.join(base_path, relative_path)
 
-
 configscanini = resource_path("config\\config_ScanDataM.ini")
 config = ConfigParser()
 config.read(configscanini)
 
-CHEMIN_DATABASE = config['CHEMINS']['CHEMIN_DATABASE'] 
-NOM_DATABASE = config['NOM']['NOM_DATABASE']
-db_path = os.path.join(CHEMIN_DATABASE, NOM_DATABASE)
-print("DB PATH =", db_path)
+SERVEUR_DATABASE = config['DATABASE']['SERVER']
+DATABASE = config['DATABASE']['DATABASE']
+USER_DATABASE = config['DATABASE']['USER']
+PASSWORD_DATABASE = config['DATABASE']['PASSWORD']
+
 
 try : 
-    connexion = pyodbc.connect(r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};"r"DBQ=" + db_path)
-    cursor = connexion.cursor()
-    cursor.execute("SELECT matricule, name, rights FROM [t_users]")
+    db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
+    cursor = db.cursor()
+    cursor.execute("SELECT matricule, name, rights FROM t_users")
     row = cursor.fetchall()  # Récupère TOUS les résultats dans la base
     print("row", row)
-    
-    
 except Exception as e:
     print("Erreur lors de la connexion à la base de données : ", e)
     row = []
-    
-

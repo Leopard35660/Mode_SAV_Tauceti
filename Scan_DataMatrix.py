@@ -1,7 +1,7 @@
 import os
 import sys
 from configparser import ConfigParser
-from connexion_Base_Matricule import *
+from connect_t_users import *
 from tkinter import *
 from tkinter import messagebox
 
@@ -57,7 +57,7 @@ def Afficher_Matricule_Nom():
             Droit_Matricule = int(i[2])
             if Droit_Matricule < 3:
                 messagebox.showerror("Matricule", "Vous n'avez pas les droits pour continuer.")
-                Infos_Matricule.delete(END,0)         
+                         
                 return
             messagebox.showinfo("Matricule", f"Matricule : {i[0]} \n Nom : {i[1]}")
             Matricule_trouve = True
