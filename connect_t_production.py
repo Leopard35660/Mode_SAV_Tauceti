@@ -23,7 +23,6 @@ try :
     cursor = db.cursor()
     cursor.execute("SELECT id_production, lbl_carte, lbl_batterie, lbl_boitier FROM t_production")
     t_production = cursor.fetchall()  # Récupère TOUS les résultats dans la base
-    print("row", t_production)
 except Exception as e:
     print("Erreur lors de la connexion à la base de données : ", e)
     t_production = []

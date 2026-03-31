@@ -23,14 +23,17 @@ DateTime_verification = None
 prenom = None
 nom = None
 right = None
+
 nom_trouve = False
+boitier_trouve = False
+
 
 id_production = None
 lbl_carte = None
 lbl_batterie = None
 lbl_boitier = None
 
-def MATRICULE_SAISIE():
+def MATRICULE_SAISIE(): # Vérification des caractères du matricule 
     global CARACTERE_MATRICULE_MAX, Matricule_saisie
     Matricule = Infos_Matricule.get().strip()
     if Matricule.isnumeric() and len(Matricule) == CARACTERE_MATRICULE_MAX:
@@ -38,7 +41,7 @@ def MATRICULE_SAISIE():
     else:
         Matricule_saisie.config(fg="red")
 
-def Afficher_Matricule_Nom():
+def Afficher_Matricule_Nom(): # Vérification de la présence du matricule dans la BDD
     global nom_trouve_BDD, BDD_matricule, Matricule_trouve, nom_trouve, prenom, nom, right 
     
     Matricule_saisie = Infos_Matricule.get().strip()
@@ -59,6 +62,12 @@ def Afficher_Matricule_Nom():
             Nom_utilisateur_title.config(text=f"Nom : {nom}")
             Prenom_utilisateur_title.config(text=f"Prénom : {prenom}")
             Matricule_trouve_title.config(text=f"Matricule : {BDD_matricule}")
+            
+            Nom_utilisateur_title_scan.config(text=f"Nom : {nom}")
+            Prenom_utilisateur_title_scan.config(text=f"Prénom : {prenom}")
+            Matricule_trouve_title_scan.config(text=f"Matricule : {BDD_matricule}")
+
+
             # Vérification des droits
             Droit_Matricule = int(i[2])
             if Droit_Matricule < 3:
@@ -74,7 +83,7 @@ def Afficher_Matricule_Nom():
         messagebox.showerror("Erreur de saisie", "Matricule non trouvé dans la base de données.")
         return
 
-def Changer_la_taille_de_la_fenetre_Boitier(): # Fonction pour changer la taille de la fenêtre pour scanner les balises
+def Changer_la_taille_de_la_fenetre_Boitier(): # Fonction pour changer la taille de la fenêtre pour scanner le boîtier
     App_Scan.geometry("600x350")
     largeur_ecran = App_Scan.winfo_screenwidth()
     longueur_ecran = App_Scan.winfo_screenheight()
@@ -95,10 +104,6 @@ def Changer_la_taille_de_la_fenetre(): # Fonction pour changer la taille de la f
     App_Scan.geometry('%dx%d+%d+%d' % (largeur, longueur, x, y))
 
     
-
-
-    
-
 def Afficher_Frame_Boitier() :
     Afficher_Matricule_Nom()
     if nom_trouve and Matricule_trouve : # Si le nom et le matricule sont trouvés dans la base de données.
@@ -107,24 +112,37 @@ def Afficher_Frame_Boitier() :
     else:
         messagebox.showerror("Erreur", "Veuillez entrer un matricule valide") 
 
-def Scan_Boitier() : 
+def Scan_Boitier() :  # Recheche du boîtier dans la base de données 
+    global boitier_trouve, id_production
     Balise_scannee = DataMatrix_Boitier.get().strip()
     print("Balise scanée :", Balise_scannee)
 
     for i in t_production : 
         id_production = i[0]
-        print("id", id_production)
         lbl_carte = i[1]
-        print("lbl_carte :", lbl_carte)
         lbl_batterie = i[2]
-        print("lbl_batterie :", lbl_batterie)
         lbl_boitier = i[3]
-        print("lbl_boitier :", lbl_boitier)
+        
+        if Balise_scannee == lbl_batterie or Balise_scannee == lbl_boitier or Balise_scannee == lbl_carte: # Vérification que ce qui a été scanné correspond soit au boîtier, à la carte ou à la batterie
+            boitier_trouve = True
+            print(id_production)
+            messagebox.showinfo("Erreur", f"DataMatrix présent dans la base id : {id_production}")
+
+    print("id", id_production)
+    print("lbl_carte :", lbl_carte)
+    print("lbl_batterie :", lbl_batterie)
+    print("lbl_boitier :", lbl_boitier)       
+    if not boitier_trouve : 
+        messagebox.showerror("Erreur", "Le Datamatrix n'est pas dans la base de données" )
 
 def Afficher_frame_scan_batterie_carte(): 
+    global id_production
     Scan_Boitier()
+    if boitier_trouve and  id_production != None : 
+        Frame_Scan.tkraise()
+        Changer_la_taille_de_la_fenetre()
 
-        
+
 App_Scan = Tk()
 App_Scan.iconbitmap(resource_path('Images\\Asteelflash_icon.ico')) #Ajouter l'icône de l'application
 App_Scan.title("SAV ULTIMA") # Titre de l'application
@@ -190,6 +208,13 @@ DataMatrix_Batterie_title = Label(Frame_Scan, text="BATTERIE :", font=("Arial", 
 DataMatrix_Batterie_title.place(x=10, y= 200)
 DataMatrix_Batterie_Entry = Entry(Frame_Scan, textvariable= DataMatrix_Batterie, font=("Calibri", 24), width=48)
 DataMatrix_Batterie_Entry.place(x= 200, y=195)
+
+Nom_utilisateur_title_scan = Label (Frame_Scan, text=f"Nom : {nom}",font= ("Calibri", 10))
+Nom_utilisateur_title_scan.place(x=900, y=10)
+Prenom_utilisateur_title_scan = Label(Frame_Scan, text=f"Prenom : {prenom}", font=("Calibri", 10)) 
+Prenom_utilisateur_title_scan.place(x=882, y=30)
+Matricule_trouve_title_scan = Label (Frame_Scan, text=f"Matricule : {BDD_matricule}",font= ("Calibri", 10))
+Matricule_trouve_title_scan.place(x=870, y=50)
 
 App_Scan.iconbitmap(resource_path('Images\\Asteelflash_icon.ico'))
 
