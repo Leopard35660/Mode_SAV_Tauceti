@@ -21,7 +21,7 @@ PASSWORD_DATABASE = config['DATABASE']['PASSWORD']
 try : 
     db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
     cursor = db.cursor()
-    cursor.execute("SELECT matricule, name, rights FROM t_users")
+    cursor.execute("SELECT * FROM t_users")
     row = cursor.fetchall()  # Récupère TOUS les résultats dans la base
     print("row", row)
 except Exception as e:
