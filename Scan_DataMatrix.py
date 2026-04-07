@@ -1,13 +1,15 @@
 import os
 import sys
 from configparser import ConfigParser
-from turtle import update
 from connect_t_users import *
 from connect_t_production import * 
+from connect_t_products import *
+from test_print import *
 from tkinter import *
 from tkinter import messagebox
 from customtkinter import *
 import datetime as dt
+
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -56,6 +58,9 @@ status = None
 
 Expiration_Batt = None
 Cdom = None
+
+Nouveau_SER = None
+
 
 def MATRICULE_SAISIE(): # Vérification des caractères du matricule 
     global CARACTERE_MATRICULE_MAX, Matricule_saisie
@@ -254,9 +259,34 @@ def Verif_Infos_Batt():
 
    
 
+def Generer_Etiquette():
+    global Nouveau_SER, id_production
+    changer_etiquette = result_checkbox2.get()
+    print("resultat checkbox : ", changer_etiquette)
+    Annee = dt.date.today()
+    Annee_2digits = Annee.strftime("%y")
+    print(Annee_2digits)
+    jourdelan = Annee.strftime("%j")
+    id_3digits = str(id_production)[-3:]
+    print("id :", id_3digits)
+
+    if changer_etiquette == 1 : 
+        print("OK")
+
+        Nouveau_SER = f"AA21{Annee_2digits}{jourdelan}{id_3digits}"
+        print("Nouveau_SER :", Nouveau_SER)
 
 
 
+
+
+def Composition_DataMatrix():
+    global Nouveau_SER
+    for i in f_case :  
+
+    
+
+    
 def Valider_Modification():
     global CARACTERE_BATTERIE_MAX, DataMatrix_Batterie_Entry, CARACTERE_CARTE_MAX,DataMatrix_Carte_Entry, lbl_carte,lbl_boitier,lbl_batterie,id_production, date_table,matricule_table, type_produit, status, id_user
     
@@ -265,7 +295,9 @@ def Valider_Modification():
 
     Carte_Saisie = DataMatrix_Carte.get().strip()
     Batterie_Saisie = DataMatrix_Batterie.get().strip()
-    
+   
+    Generer_Etiquette()
+     
     if Carte_Saisie =="" or DataMatrix_Carte_Entry.cget("fg") == "red":
         messagebox.showerror("Erreur", "Veuillez revérifier le DataMatrix de la carte.")
         return 
@@ -287,7 +319,7 @@ def Valider_Modification():
             Batterie_Saisie = lbl_batterie
         except Exception as e:
                 print("Erreur lors de la connexion à la base de données : ", e)
-
+    
     
     elif Carte_Saisie != lbl_carte : 
         try : 
@@ -412,14 +444,13 @@ Prenom_utilisateur_title_scan.place(x=882, y=30)
 Matricule_trouve_title_scan = Label (Frame_Scan, text=f"Matricule : {BDD_matricule}",font= ("Calibri", 10))
 Matricule_trouve_title_scan.place(x=870, y=50)
 
-CheckBox1 = CTkCheckBox( Frame_Scan, text="Garder le SERIAL NUMBER",font= ("Calibri", 16),text_color="black" )
-CheckBox1.place(x=200, y=300)
-CheckBox2 = CTkCheckBox( Frame_Scan, text="Changer le SERIAL NUMBER",font= ("Calibri", 16),text_color="black" ) # Afficher les checkbox de choix de option SN
+result_checkbox2= IntVar()
+
+CheckBox2 = CTkCheckBox( Frame_Scan, text="Changer le SERIAL NUMBER", variable= result_checkbox2,font= ("Calibri", 16),text_color="black" ) # Afficher les checkbox de choix de option SN
 CheckBox2.place(x=500, y=300)
 LabelBoitierAffichage_title = Label (Frame_Scan, text=f"Vous êtes sur la balise : {LabelBoitierAffichage}",font= ("Calibri", 18))
 LabelBoitierAffichage_title.place(x=200, y=20)
 Bouton_validation_final = Button(Frame_Scan, text="Valider", command=Valider_Modification, bg="#005DAB",font=("Arial", 12,"bold"), fg="white") 
-
 
 Bouton_validation_final.place(x=900, y=350)
 
