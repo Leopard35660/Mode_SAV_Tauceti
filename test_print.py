@@ -87,7 +87,6 @@ def Recherche_Infos_SKELETON():
     for ligne in contenu.splitlines():
         if DATAM_GAUCHE_SKELETON in ligne:
             datamgauche_skeleton = re.search(r"\^FD(.+?)\^FS", ligne).group(1)
-            print("DataMGauche :", datamgauche_skeleton)
             nouveau_contenu = nouveau_contenu.replace(datamgauche_skeleton, DATAM_GAUCHE_TEST)
             break
 
@@ -95,7 +94,6 @@ def Recherche_Infos_SKELETON():
     for ligne in contenu.splitlines():
         if DATAM_DROITE_SKELETON in ligne:
             datamdroite_skeleton = re.search(r"\^FD(.+?)\^FS", ligne).group(1)
-            print("DataMDroite :", datamdroite_skeleton)
             nouveau_contenu = nouveau_contenu.replace(datamdroite_skeleton, DATAM_DROITE_TEST)
             break
 
@@ -112,7 +110,6 @@ def Impression() :
     global nouveau_fichier
     ouvrir_prn = open(nouveau_fichier)
     lire_prn = ouvrir_prn.read()
-    print(lire_prn)
     ouvrir_prn.close()
     z = Zebra()
     try: 
