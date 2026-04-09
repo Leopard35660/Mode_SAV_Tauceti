@@ -3,6 +3,7 @@ import os
 import sys
 import mysql.connector
 
+#Le script se connecte à la base SQL tauceti : table t_production pour prendre les infos nécéssaires
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -21,8 +22,11 @@ PASSWORD_DATABASE = config['DATABASE']['PASSWORD']
 try : 
     db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
     cursor = db.cursor()
-    cursor.execute("SELECT id_production, lbl_carte, lbl_batterie, lbl_boitier FROM t_production")
+    # Selectionner id_production, lbl_carte, lbl_batterie, lbl_boitier dans la table 
+    cursor.execute("SELECT id_production, lbl_carte, lbl_batterie, lbl_boitier FROM t_production") 
     t_production = cursor.fetchall()  # Récupère TOUS les résultats dans la base
+    # t_production est une liste de toutes les valeurs 
+    # elle est appélée dans le sript Scan_DataMatrix.py
 except Exception as e:
     print("Erreur lors de la connexion à la base de données : ", e)
     t_production = []

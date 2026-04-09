@@ -96,6 +96,7 @@ def Boitier_Saisie() :
         DataMatrix_Boitier_Entry.config(fg="red")
 
 
+
 def Afficher_Matricule_Nom(): # Vérification de la présence du matricule dans la BDD
     global nom_trouve_BDD, BDD_matricule, Matricule_trouve, nom_trouve, prenom, nom, right, id_user
     
@@ -240,7 +241,7 @@ def Verif_Infos_Batt():
 
 
     if Expiration_restante <= EXPIRATIONBATT : 
-        messagebox.showwarning("Batterie expirée", f"La batterie est expirée {Expiration_restante} mois au lieu de {EXPIRATIONBATT + 1} mois")
+        messagebox.showwarning("Batterie expirée", f"La batterie est expirée {Expiration_restante} mois au lieu de {EXPIRATIONBATT} mois")
         return
 
     
@@ -255,7 +256,7 @@ def Verif_Infos_Batt():
     print("Temps restant DOM : ", Cdom_duree)
     
     if Cdom_duree >= CDOMBATT : 
-        messagebox.showwarning("CDOM périmé", f"Le CDOM est périmé {Cdom_duree} mois au lieu de {CDOMBATT-1} mois")
+        messagebox.showwarning("CDOM périmé", f"Le CDOM est périmé {Cdom_duree} mois au lieu de {CDOMBATT} mois")
         return
 
    
@@ -278,17 +279,20 @@ def Generer_Etiquette():
         print("Nouveau_SER :", Nouveau_SER)
         Nouveau_SER = str(Nouveau_SER)
 
-def Composition_DataMatrix():
-    global Nouveau_SER, f_case, lbl_boitier,lbl_batterie
-    changer_etiquette = result_checkbox2.get()
+def Composition_DataMatrix_Gauche():
+    global Nouveau_SER, f_case, lbl_boitier
+    changer_SN= result_checkbox2.get()
+    Batterie_Saisie = DataMatrix_Batterie.get().strip()
+    print(f_case)
     # Transformer f_case en string pour le modifier 
     f_case = str(f_case[0])
     Nouveau_SER = str(Nouveau_SER)
+    Old_SER = lbl_boitier[:12]
     Annee = dt.date.today()
     mois = Annee.strftime("%m")
     an = Annee.strftime("%Y")
     csn = lbl_boitier[24:30]
-    ed = lbl_batterie[31:38]
+    ed = Batterie_Saisie[31:38]
 
     # Enlever les caractères indésirable hors resultat souhaité              
     f_case = f_case.replace("(", "") 
@@ -296,24 +300,52 @@ def Composition_DataMatrix():
     f_case = f_case.replace(",", "")
     f_case = f_case.replace("'", "")
     print(f_case)
-    if changer_etiquette == 1 :
-        f_case = f_case.replace("AA21%YY%%DDD%%NNN%",Nouveau_SER )
+    # Dans le cas où on change le SN
+    if changer_SN == 1 :
+        f_case = f_case.replace("AA21%YY%%DDD%%NNN%",Nouveau_SER)
         f_case = f_case.replace("%MM%", mois)
         f_case = f_case.replace("%YYYY%", an)
         f_case = f_case.replace("%CSN%", csn)
         f_case = f_case.replace("%ED%", ed)
+        print("New DataM Gauche :",f_case)
+    else : 
+        f_case = f_case.replace("AA21%YY%%DDD%%NNN%",Old_SER)
+        f_case = f_case.replace("%MM%", mois)
+        f_case = f_case.replace("%YYYY%", an)
+        f_case = f_case.replace("%CSN%", csn)
+        f_case = f_case.replace("%ED%", ed) 
+        print("OLD DataM Gauche :",f_case)
 
+def Composition_DataMatrix_Droite(): 
+    global lbl_batterie,lbl_carte,f_boxright
+    changer_SN= result_checkbox2.get()
+    Batterie_Saisie = DataMatrix_Batterie.get().strip()
+    Carte_Saisie = DataMatrix_Carte.get().strip()
+    psn = Carte_Saisie.split(";")[0]
+    ppn = Carte_Saisie.split(";")[3][:14]
+    psw = Carte_Saisie.split(";")[1][11:21]
+    bsn = Batterie_Saisie.split(";")[0]
+    bpn = Batterie_Saisie.split(";")[3][0:14]
+    exp = Batterie_Saisie[31:38]
+    dom = Batterie_Saisie[16:23]
+    # Formater la date cdom en MM/YYYY
+    cdom = dt.datetime.strptime("01/" + Batterie_Saisie.split(";")[1][11:16], "%d/%m/%y").strftime("%m/%Y")
 
-
-    print(f_case)
-
-
-
-
-
-
-
-    
+    f_boxright = str(f_boxright[0])
+    f_boxright = f_boxright.replace("(", "") 
+    f_boxright = f_boxright.replace(")", "")
+    f_boxright = f_boxright.replace(",", "") 
+    f_boxright = f_boxright.replace("'", "")
+    f_boxright = f_boxright.replace("%PSN%", psn)
+    f_boxright = f_boxright.replace("%PPN%", ppn)
+    f_boxright = f_boxright.replace("%PSW%", psw)
+    f_boxright = f_boxright.replace("%BSN%", bsn)
+    f_boxright = f_boxright.replace("%BPN%", bpn)
+    f_boxright = f_boxright.replace("%CDOM%", cdom)
+    f_boxright = f_boxright.replace("%DOM%", dom)
+    f_boxright = f_boxright.replace("%EXP%", exp)
+    print("DataMDroite",f_boxright)
+       
 def Valider_Modification():
     global CARACTERE_BATTERIE_MAX, DataMatrix_Batterie_Entry, CARACTERE_CARTE_MAX,DataMatrix_Carte_Entry, lbl_carte,lbl_boitier,lbl_batterie,id_production, date_table,matricule_table, type_produit, status, id_user
     
@@ -332,63 +364,64 @@ def Valider_Modification():
         messagebox.showerror("Erreur", "Veuillez revérifier le DataMatrix de la batterie.")
         return 
     Generer_Etiquette()
-    Composition_DataMatrix()
-    # if Carte_Saisie != lbl_carte and Batterie_Saisie != lbl_batterie : 
-    #     try : 
-    #         db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
-    #         insert = db.cursor()
-    #         insert.execute("INSERT INTO t_repair (id_production, matricule, date, lbl_carte, lbl_batterie, lbl_boitier, type_produit) ""VALUES ('" + str(id_production) + "', '" + str(id_user) + "', '" + str(date_table) + "', '" +str(lbl_carte) + "', '" + str(lbl_batterie) + "', '" + str(lbl_boitier) + "', '" + str(type_produit) + "')")
-    #         update = db.cursor()
-    #         update.execute("UPDATE t_production SET date = '" + str(aujourdhui) + "',lbl_carte = '" + str(Carte_Saisie) + "' ,lbl_batterie = '" + str(Batterie_Saisie) + "' WHERE id_production = '" + str(id_production) + "'")
-    #         db.commit()
-    #         print("batterie et carte saisie saisie différente de lbl carte et batterie ")
-    #         print('Les commandes sont faites')
-    #         Carte_Saisie = lbl_carte
-    #         Batterie_Saisie = lbl_batterie
-    #     except Exception as e:
-    #             print("Erreur lors de la connexion à la base de données : ", e)
+    Composition_DataMatrix_Gauche()
+    Composition_DataMatrix_Droite()
+    if Carte_Saisie != lbl_carte and Batterie_Saisie != lbl_batterie : 
+        try : 
+            db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
+            insert = db.cursor()
+            insert.execute("INSERT INTO t_repair (id_production, matricule, date, lbl_carte, lbl_batterie, lbl_boitier, type_produit) ""VALUES ('" + str(id_production) + "', '" + str(id_user) + "', '" + str(date_table) + "', '" +str(lbl_carte) + "', '" + str(lbl_batterie) + "', '" + str(lbl_boitier) + "', '" + str(type_produit) + "')")
+            update = db.cursor()
+            update.execute("UPDATE t_production SET date = '" + str(aujourdhui) + "',lbl_carte = '" + str(Carte_Saisie) + "' ,lbl_batterie = '" + str(Batterie_Saisie) + "' WHERE id_production = '" + str(id_production) + "'")
+            db.commit()
+            print("batterie et carte saisie saisie différente de lbl carte et batterie ")
+            print('Les commandes sont faites')
+            Carte_Saisie = lbl_carte
+            Batterie_Saisie = lbl_batterie
+        except Exception as e:
+                print("Erreur lors de la connexion à la base de données : ", e)
     
     
-    # elif Carte_Saisie != lbl_carte : 
-    #     try : 
-    #         db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
-    #         cursor = db.cursor()
-    #         cursor.execute("INSERT INTO t_repair (id_production, matricule, date, lbl_carte, lbl_batterie, lbl_boitier, type_produit) ""VALUES ('" + str(id_production) + "', '" + str(id_user) + "', '" + str(date_table) + "', '" +str(lbl_carte) + "', '" + str(lbl_batterie) + "', '" + str(lbl_boitier) + "', '" + str(type_produit) + "')")
-    #         update = db.cursor()
-    #         update.execute("UPDATE t_production SET date = '" + str(aujourdhui) + "' ,lbl_carte = '" + str(Carte_Saisie) + "' WHERE id_production = '" + str(id_production) + "'")
-    #         db.commit()
-    #         print("Carte saisie différente de lbl-carte")
-    #         print('Les commandes sont faites')
-    #         Carte_Saisie = lbl_carte
-    #     except Exception as e:
-    #         print("Erreur lors de la connexion à la base de données : ", e)
+    elif Carte_Saisie != lbl_carte : 
+        try : 
+            db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
+            cursor = db.cursor()
+            cursor.execute("INSERT INTO t_repair (id_production, matricule, date, lbl_carte, lbl_batterie, lbl_boitier, type_produit) ""VALUES ('" + str(id_production) + "', '" + str(id_user) + "', '" + str(date_table) + "', '" +str(lbl_carte) + "', '" + str(lbl_batterie) + "', '" + str(lbl_boitier) + "', '" + str(type_produit) + "')")
+            update = db.cursor()
+            update.execute("UPDATE t_production SET date = '" + str(aujourdhui) + "' ,lbl_carte = '" + str(Carte_Saisie) + "' WHERE id_production = '" + str(id_production) + "'")
+            db.commit()
+            print("Carte saisie différente de lbl-carte")
+            print('Les commandes sont faites')
+            Carte_Saisie = lbl_carte
+        except Exception as e:
+            print("Erreur lors de la connexion à la base de données : ", e)
 
-    # elif Batterie_Saisie != lbl_batterie : 
-    #     try : 
-    #         db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
-    #         cursor = db.cursor()
-    #         cursor.execute("INSERT INTO t_repair (id_production, matricule, date, lbl_carte, lbl_batterie, lbl_boitier, type_produit) ""VALUES ('" + str(id_production) + "', '" + str(id_user) + "', '" + str(date_table) + "', '" +str(lbl_carte) + "', '" + str(lbl_batterie) + "', '" + str(lbl_boitier) + "', '" + str(type_produit) + "')")
-    #         update = db.cursor()
-    #         update.execute("UPDATE t_production SET date = '" + str(aujourdhui) + "' ,lbl_batterie = '" + str(Batterie_Saisie) + "' WHERE id_production = '" + str(id_production) + "'")
-    #         db.commit()
-    #         print("batterie saisie différente de lbl-batterie")
-    #         print('Les commandes sont faites')
-    #         Batterie_Saisie = lbl_batterie
-    #     except Exception as e:
-    #         print("Erreur lors de la connexion à la base de données : ", e)
+    elif Batterie_Saisie != lbl_batterie : 
+        try : 
+            db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
+            cursor = db.cursor()
+            cursor.execute("INSERT INTO t_repair (id_production, matricule, date, lbl_carte, lbl_batterie, lbl_boitier, type_produit) ""VALUES ('" + str(id_production) + "', '" + str(id_user) + "', '" + str(date_table) + "', '" +str(lbl_carte) + "', '" + str(lbl_batterie) + "', '" + str(lbl_boitier) + "', '" + str(type_produit) + "')")
+            update = db.cursor()
+            update.execute("UPDATE t_production SET date = '" + str(aujourdhui) + "' ,lbl_batterie = '" + str(Batterie_Saisie) + "' WHERE id_production = '" + str(id_production) + "'")
+            db.commit()
+            print("batterie saisie différente de lbl-batterie")
+            print('Les commandes sont faites')
+            Batterie_Saisie = lbl_batterie
+        except Exception as e:
+            print("Erreur lors de la connexion à la base de données : ", e)
             
 
 
-    # elif Carte_Saisie == lbl_carte and Batterie_Saisie == lbl_batterie : 
-    #     try : 
-    #         db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
-    #         insert = db.cursor()
-    #         insert.execute("INSERT INTO t_repair (id_production, matricule, date, lbl_carte, lbl_batterie, lbl_boitier, type_produit) ""VALUES ('" + str(id_production) + "', '" + str(id_user) + "', '" + str(date_table) + "', '" +str(lbl_carte) + "', '" + str(lbl_batterie) + "', '" + str(lbl_boitier) + "', '" + str(type_produit) + "')")
-    #         update = db.cursor()
-    #         update.execute("UPDATE t_production SET date = '" + str(aujourdhui) + "'WHERE id_production ='" + str(id_production) + "' ")
-    #         db.commit()
-    #     except Exception as e:
-    #         print("Erreur lors de la connexion à la base de données : ", e)
+    elif Carte_Saisie == lbl_carte and Batterie_Saisie == lbl_batterie : 
+        try : 
+            db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
+            insert = db.cursor()
+            insert.execute("INSERT INTO t_repair (id_production, matricule, date, lbl_carte, lbl_batterie, lbl_boitier, type_produit) ""VALUES ('" + str(id_production) + "', '" + str(id_user) + "', '" + str(date_table) + "', '" +str(lbl_carte) + "', '" + str(lbl_batterie) + "', '" + str(lbl_boitier) + "', '" + str(type_produit) + "')")
+            update = db.cursor()
+            update.execute("UPDATE t_production SET date = '" + str(aujourdhui) + "'WHERE id_production ='" + str(id_production) + "' ")
+            db.commit()
+        except Exception as e:
+            print("Erreur lors de la connexion à la base de données : ", e)
 
 
 
