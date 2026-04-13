@@ -1,14 +1,17 @@
 import os
+import shutil
 import sys
+import re
 from configparser import ConfigParser
-from connect_t_users import *
-from connect_t_production import * 
-from connect_t_products import *
-from test_print import *
 from tkinter import *
 from tkinter import messagebox
 from customtkinter import *
 import datetime as dt
+
+from zebra import Zebra
+from connect_t_users import *
+from connect_t_production import * 
+from connect_t_products import *
 
 
 def resource_path(relative_path):
@@ -17,7 +20,7 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 configscanini = resource_path("config\\config_ScanDataM.ini")
-config = ConfigParser()
+config = ConfigParser(interpolation= None)
 config.read(configscanini)
 
 SERVEUR_DATABASE = config['DATABASE']['Server']
@@ -34,7 +37,15 @@ DATAMATRIX_RIGHT_MAX = int(config['PARAMETRES']['DATAMATRIX_RIGHT_MAX'])
 EXPIRATIONBATT = int(config['CONTROL']['ExpirationBatt'])
 CDOMBATT = int(config['CONTROL']['CDOMBatt'])
 
-
+FICHIER_PRN_SKELETON = config['LABEL']['Source'] 
+FICHIER_PRN_BALISE = config['LABEL']['Output'] 
+NOM_IMPRIMANTE = config['LABEL']['PrinterName']
+ 
+DATAM_GAUCHE_SKELETON= config['LABEL']['DataMatrixBox'] 
+DATAM_DROITE_SKELETON = config['LABEL']['DataMatrixContent'] 
+PNR_SKELETON = config['LABEL']['PNR'] # %PNR% 
+SER_SKELETON = config['LABEL']['SER'] # %SER%
+CSN_SKELETON = config['LABEL']['CSN'] # %CSN%
 
 nom_trouve_BDD = None
 BDD_matricule = None
@@ -61,7 +72,11 @@ Cdom = None
 
 Nouveau_SER = None
 
+pnr_datam = None
+ser_datam = None
+csn_datam = None
 
+fichier_copie = None
 def MATRICULE_SAISIE(): # Vérification des caractères du matricule 
     global CARACTERE_MATRICULE_MAX, Matricule_saisie
     Matricule = Infos_Matricule.get().strip()
@@ -280,10 +295,13 @@ def Generer_Etiquette():
         Nouveau_SER = str(Nouveau_SER)
 
 def Composition_DataMatrix_Gauche():
-    global Nouveau_SER, f_case, lbl_boitier
+    global Nouveau_SER, f_case, lbl_boitier, f_case
     changer_SN= result_checkbox2.get()
     Batterie_Saisie = DataMatrix_Batterie.get().strip()
     print(f_case)
+    if f_case is None:
+        print("Aucun résultat SQL")
+        return
     # Transformer f_case en string pour le modifier 
     f_case = str(f_case[0])
     Nouveau_SER = str(Nouveau_SER)
@@ -318,7 +336,6 @@ def Composition_DataMatrix_Gauche():
 
 def Composition_DataMatrix_Droite(): 
     global lbl_batterie,lbl_carte,f_boxright
-    changer_SN= result_checkbox2.get()
     Batterie_Saisie = DataMatrix_Batterie.get().strip()
     Carte_Saisie = DataMatrix_Carte.get().strip()
     psn = Carte_Saisie.split(";")[0]
@@ -330,6 +347,9 @@ def Composition_DataMatrix_Droite():
     dom = Batterie_Saisie[16:23]
     # Formater la date cdom en MM/YYYY
     cdom = dt.datetime.strptime("01/" + Batterie_Saisie.split(";")[1][11:16], "%d/%m/%y").strftime("%m/%Y")
+    if f_boxright is None:
+        print("Aucun résultat SQL")
+        return
 
     f_boxright = str(f_boxright[0])
     f_boxright = f_boxright.replace("(", "") 
@@ -345,7 +365,98 @@ def Composition_DataMatrix_Droite():
     f_boxright = f_boxright.replace("%DOM%", dom)
     f_boxright = f_boxright.replace("%EXP%", exp)
     print("DataMDroite",f_boxright)
+
+def Recherche_Infos_DataMatrix():
+    global pnr_datam, ser_datam, csn_datam, f_case
        
+    csn_datam = f_case[24:30]
+    print("CSN :", csn_datam)
+    ser_datam = f_case[:12]
+    print("SER :", ser_datam)
+    pnr_datam = f_case[42:53]
+    print("PNR :", pnr_datam)
+
+def Recherche_Infos_SKELETON(): 
+    global id_production, f_boxright, f_case, fichier_copie
+    global pnr_skeleton, pnr_datam, ser_skeleton, ser_datam, CSN_skeleton, csn_datam, datamdroite_skeleton,datamgauche_skeleton
+    
+    date = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+    nom_fichier_Sauvegarder = f"Tauceti_{id_production}_{date}.prn"
+
+
+    fichiersauvegarder = os.path.join(FICHIER_PRN_BALISE, nom_fichier_Sauvegarder)
+    fichier_copie = shutil.copyfile(FICHIER_PRN_SKELETON, fichiersauvegarder)
+
+    with open(fichier_copie, "r") as fichier:
+        contenu = fichier.read()
+
+    nouveau_contenu = contenu
+    
+    # PNR 
+    for ligne in contenu.splitlines():
+        if PNR_SKELETON in ligne:
+            pnr_skeleton = re.search(r"\^FD(.+?)\^FS", ligne).group(1)
+            print("PNR :", pnr_skeleton)
+            nouveau_contenu = nouveau_contenu.replace(pnr_skeleton, pnr_datam)
+            break
+
+    # SER 
+    for ligne in contenu.splitlines():
+        if SER_SKELETON in ligne:
+            ser_skeleton = re.search(r"\^FD(.+?)\^FS", ligne).group(1)
+            print("SER :", ser_skeleton)
+            nouveau_contenu = nouveau_contenu.replace(ser_skeleton, ser_datam)
+            break
+
+    # CSN 
+    for ligne in contenu.splitlines():
+        if CSN_SKELETON in ligne:
+            CSN_skeleton = re.search(r"\^FD(.+?)\^FS", ligne).group(1)
+            print("CSN :", CSN_skeleton)
+            nouveau_contenu = nouveau_contenu.replace(CSN_skeleton, csn_datam)
+            break
+
+    # DATAMATRIX GAUCHE 
+    for ligne in contenu.splitlines():
+        if DATAM_GAUCHE_SKELETON in ligne:
+            datamgauche_skeleton = re.search(r"\^FD(.+?)\^FS", ligne).group(1)
+            nouveau_contenu = nouveau_contenu.replace(datamgauche_skeleton, f_case)
+            break
+
+    # DATAMATRIX DROITE 
+    for ligne in contenu.splitlines():
+        if DATAM_DROITE_SKELETON in ligne:
+            datamdroite_skeleton = re.search(r"\^FD(.+?)\^FS", ligne).group(1)
+            nouveau_contenu = nouveau_contenu.replace(datamdroite_skeleton, f_boxright)
+            break
+    
+    with open(fichier_copie, "w") as fichier:
+        fichier.write(nouveau_contenu)
+    print("nouveau :", fichier_copie)
+    
+def Impression():
+    global fichier_copie
+
+    if not fichier_copie:
+        print("Erreur : aucun fichier PRN généré")
+        return
+    try:
+        with open(fichier_copie, "r") as f:
+            lire_prn = f.read()
+    except Exception as e:
+        print("Erreur ouverture PRN :", e)
+        return
+    z = Zebra()
+    if NOM_IMPRIMANTE not in z.getqueues():
+        print(f"Imprimante non trouvée : {NOM_IMPRIMANTE}")
+        return
+    z.setqueue(NOM_IMPRIMANTE)
+    z.output(lire_prn)
+
+    
+
+
+
 def Valider_Modification():
     global CARACTERE_BATTERIE_MAX, DataMatrix_Batterie_Entry, CARACTERE_CARTE_MAX,DataMatrix_Carte_Entry, lbl_carte,lbl_boitier,lbl_batterie,id_production, date_table,matricule_table, type_produit, status, id_user
     
@@ -420,10 +531,13 @@ def Valider_Modification():
             update = db.cursor()
             update.execute("UPDATE t_production SET date = '" + str(aujourdhui) + "'WHERE id_production ='" + str(id_production) + "' ")
             db.commit()
+            print("batterie saisie et carte saisie identique aux labels BDD")
+            print('Les commandes sont faites')
         except Exception as e:
             print("Erreur lors de la connexion à la base de données : ", e)
-
-
+    Recherche_Infos_DataMatrix()
+    Recherche_Infos_SKELETON()
+    Impression()
 
 
 App_Scan = Tk()
