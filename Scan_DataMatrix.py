@@ -1,4 +1,5 @@
 import os
+import shlex
 import shutil
 import sys
 import re
@@ -12,6 +13,8 @@ from zebra import Zebra
 from connect_t_users import *
 from connect_t_production import * 
 from connect_t_products import *
+import subprocess
+
 
 
 def resource_path(relative_path):
@@ -39,7 +42,6 @@ CDOMBATT = int(config['CONTROL']['CDOMBatt'])
 
 FICHIER_PRN_SKELETON = config['LABEL']['Source'] 
 FICHIER_PRN_BALISE = config['LABEL']['Output'] 
-NOM_IMPRIMANTE = config['LABEL']['PrinterName']
  
 DATAM_GAUCHE_SKELETON= config['LABEL']['DataMatrixBox'] 
 DATAM_DROITE_SKELETON = config['LABEL']['DataMatrixContent'] 
@@ -47,6 +49,8 @@ PNR_SKELETON = config['LABEL']['PNR'] # %PNR%
 SER_SKELETON = config['LABEL']['SER'] # %SER%
 CSN_SKELETON = config['LABEL']['CSN'] # %CSN%
 
+PRINTERARG = config['LABEL']['PrinterArg'] 
+PRINTEREXE = config['LABEL']['PrinterExe'] 
 nom_trouve_BDD = None
 BDD_matricule = None
 
@@ -434,30 +438,23 @@ def Recherche_Infos_SKELETON():
         fichier.write(nouveau_contenu)
     print("nouveau :", fichier_copie)
     
+
+
 def Impression():
     global fichier_copie
 
-    if not fichier_copie:
-        print("Erreur : aucun fichier PRN généré")
-        return
-    try:
-        with open(fichier_copie, "r") as f:
-            lire_prn = f.read()
-    except Exception as e:
-        print("Erreur ouverture PRN :", e)
-        return
-    z = Zebra()
-    if NOM_IMPRIMANTE not in z.getqueues():
-        print(f"Imprimante non trouvée : {NOM_IMPRIMANTE}")
-        return
-    z.setqueue(NOM_IMPRIMANTE)
-    z.output(lire_prn)
+    # Remplacement du placeholder
+    printerArgFinal = PRINTERARG.replace("%LBL%", fichier_copie)
 
-    
+    # Découpage CORRECT des arguments
+    args = shlex.split(printerArgFinal)
 
+    print_process = subprocess.Popen([PRINTEREXE] + args,shell=False)
+    print_process.wait()
 
 
 def Valider_Modification():
+
     global CARACTERE_BATTERIE_MAX, DataMatrix_Batterie_Entry, CARACTERE_CARTE_MAX,DataMatrix_Carte_Entry, lbl_carte,lbl_boitier,lbl_batterie,id_production, date_table,matricule_table, type_produit, status, id_user
     
     Verif_Infos_Batt()
@@ -626,6 +623,7 @@ CheckBox2.place(x=500, y=300)
 LabelBoitierAffichage_title = Label (Frame_Scan, text=f"Vous êtes sur la balise : {LabelBoitierAffichage}",font= ("Calibri", 18))
 LabelBoitierAffichage_title.place(x=200, y=20)
 Bouton_validation_final = Button(Frame_Scan, text="Valider", command=Valider_Modification, bg="#005DAB",font=("Arial", 12,"bold"), fg="white") 
+
 
 Bouton_validation_final.place(x=900, y=350)
 
