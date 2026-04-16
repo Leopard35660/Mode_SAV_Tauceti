@@ -26,6 +26,7 @@ configscanini = resource_path("config\\config_ScanDataM.ini")
 config = ConfigParser(interpolation= None)
 config.read(configscanini)
 
+# cf config_ScanDataM.ini
 SERVEUR_DATABASE = config['DATABASE']['Server']
 DATABASE = config['DATABASE']['Database']
 USER_DATABASE = config['DATABASE']['User']
@@ -51,13 +52,14 @@ CSN_SKELETON = config['LABEL']['CSN'] # %CSN%
 
 PRINTERARG = config['LABEL']['PrinterArg'] 
 PRINTEREXE = config['LABEL']['PrinterExe'] 
+
 nom_trouve_BDD = None
 BDD_matricule = None
-
-id_user = None
+id_user =None
 prenom = None
 nom = None
 right = None
+
 nom_trouve = False
 boitier_trouve = False
 LabelBoitierAffichage = None
@@ -81,6 +83,8 @@ ser_datam = None
 csn_datam = None
 
 fichier_copie = None
+impression_reussi = False
+
 def MATRICULE_SAISIE(): # Vérification des caractères du matricule 
     global CARACTERE_MATRICULE_MAX, Matricule_saisie
     Matricule = Infos_Matricule.get().strip()
@@ -89,7 +93,7 @@ def MATRICULE_SAISIE(): # Vérification des caractères du matricule
     else:
         Matricule_saisie.config(fg="red")
 
-def BATTERIE_saisie() : 
+def BATTERIE_saisie() : # Verification de la longueur de la chaîne saisie pour la batterie
     global CARACTERE_BATTERIE_MAX, DataMatrix_Batterie_Entry
     Batterie_Saisie = DataMatrix_Batterie.get().strip()
     if len(Batterie_Saisie) == CARACTERE_BATTERIE_MAX:
@@ -98,7 +102,7 @@ def BATTERIE_saisie() :
         DataMatrix_Batterie_Entry.config(fg="red")
     
 
-def CARTE_Saisie() : 
+def CARTE_Saisie() : # Verification de la longueur de la chaîne saisie pour la carte
     global  CARACTERE_CARTE_MAX,DataMatrix_Carte_Entry
     Carte_Saisie = DataMatrix_Carte.get().strip()
     if len(Carte_Saisie) == CARACTERE_CARTE_MAX: 
@@ -106,7 +110,7 @@ def CARTE_Saisie() :
     else:
         DataMatrix_Carte_Entry.config(fg="red")
 
-def Boitier_Saisie() : 
+def Boitier_Saisie() : # Verification de la longueur de la chaîne saisie pour le boitier
     global DATAMATRIX_LEFT_MAX, DATAMATRIX_RIGHT_MAX, DataMatrix_Boitier_Entry
     Boitier_saisie = DataMatrix_Boitier.get().strip()
     if len(Boitier_saisie) == DATAMATRIX_LEFT_MAX or len(Boitier_saisie) == DATAMATRIX_RIGHT_MAX : 
@@ -121,21 +125,19 @@ def Afficher_Matricule_Nom(): # Vérification de la présence du matricule dans 
     
     Matricule_saisie = Infos_Matricule.get().strip()
     print("Infos Matricule", Matricule_saisie)
-
-    if not row:
+    if not row: # Si la ligne du matricule n'est pas trouvée
         messagebox.showerror("Erreur", "Aucune donnée dans la base de données !")
         return
-
     Matricule_trouve = False
 
-    for i in row:
+    for i in row: # Pour chaque donnée trouvée dans la base table t_users cf connect_t_users.py
         Matricule = str(i[1]).strip()
 
         if Matricule_saisie == Matricule:
-            id_user = i[0]
+            id_user = i[0] # 1ère colonne de la table
             nom_trouve_BDD = i[2]
             print("nom trouvé",nom_trouve_BDD)
-            prenom, nom = nom_trouve_BDD.split(" ", 1)
+            prenom, nom = nom_trouve_BDD.split(" ", 1) # Séparer l'espace pour le nom et prénom 
             BDD_matricule = i[1]
             Nom_utilisateur_title.config(text=f"Nom : {nom}")
             Prenom_utilisateur_title.config(text=f"Prénom : {prenom}")
@@ -148,14 +150,14 @@ def Afficher_Matricule_Nom(): # Vérification de la présence du matricule dans 
 
             # Vérification des droits
             Droit_Matricule = int(i[3])
-            if Droit_Matricule < 3:
+            if Droit_Matricule < 3: # Si le droit est inferieur à 3 : Stopper l'applicatif
                 messagebox.showerror("Matricule", "Vous n'avez pas les droits pour continuer")
-                         
                 return
-            messagebox.showinfo("Matricule", f"Matricule : {i[1]} \n Nom : {i[2]}")
-            Matricule_trouve = True
-            nom_trouve = True
-            break
+            else: # Sinon afficher le matricule et le nom
+                messagebox.showinfo("Matricule", f"Matricule : {i[1]} \n Nom : {i[2]}")
+                Matricule_trouve = True
+                nom_trouve = True
+                break
 
     if not Matricule_trouve:
         messagebox.showerror("Erreur de saisie", "Matricule non trouvé dans la base de données.")
@@ -182,7 +184,7 @@ def Changer_la_taille_de_la_fenetre(): # Fonction pour changer la taille de la f
     App_Scan.geometry('%dx%d+%d+%d' % (largeur, longueur, x, y))
 
     
-def Afficher_Frame_Boitier() :
+def Afficher_Frame_Boitier() : # Afficher la frame boitier 
     Afficher_Matricule_Nom()
     if nom_trouve and Matricule_trouve : # Si le nom et le matricule sont trouvés dans la base de données.
         Frame_Scan_Boitier.tkraise() # Afficher la frame pour scanner les balises
@@ -195,7 +197,7 @@ def Scan_Boitier() :  # Recheche du boîtier dans la base de données
     Balise_scannee = DataMatrix_Boitier.get().strip()
     print("Balise scannée :", Balise_scannee)
         
-    try : 
+    try : # Connexion à la base de données
         db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
         cursor = db.cursor()
         # Trouver la ligne contenant la ligne de la balise comme commande SQL LIKE%%
@@ -233,10 +235,10 @@ def Scan_Boitier() :  # Recheche du boîtier dans la base de données
           
     
     LabelBoitierAffichage = lbl_boitier[:12]
-    LabelBoitierAffichage_title.config(text=f"Vous êtes sur la balise : {LabelBoitierAffichage}") # Afficher le SERIAL NUMBER sur la frame 
+    LabelBoitierAffichage_title.config(text=f"Vous êtes sur la balise : {LabelBoitierAffichage}") # Afficher le SERIAL NUMBER sur la frame scanner carte batterie
     
 
-def Afficher_frame_scan_batterie_carte(): 
+def Afficher_frame_scan_batterie_carte(): #Afficher la frame carte batterie 
     global id_production, DataMatrix_Boitier_Entry
     Boitier_saisie = DataMatrix_Boitier.get().strip()
     if Boitier_saisie =="" or DataMatrix_Boitier_Entry.cget("fg") == "red":
@@ -248,41 +250,37 @@ def Afficher_frame_scan_batterie_carte():
         Changer_la_taille_de_la_fenetre()
 
 
-def Verif_Infos_Batt(): 
+def Verif_Infos_Batt(): # Vérifier si la batterie n'est pas périmée 
     global  EXPIRATIONBATT,CDOMBATT, lbl_batterie
     global Expiration_Batt, Cdom
     Expiration_now =  dt.datetime.today()
     Batterie_Saisie = DataMatrix_Batterie.get().strip()
-    Expiration_String =  Batterie_Saisie[31:38]   
+    Expiration_String =  Batterie_Saisie[31:38]  # Information concernant l'expiration de la batterie 
     Expiration_Batt = dt.datetime.strptime(Expiration_String, "%m/%Y")
     print("Expiration de la batterie :", Expiration_Batt)
     Expiration_restante = (Expiration_Batt.year - Expiration_now.year) * 12 + (Expiration_Batt.month - Expiration_now.month) # Différence en mois
 
 
-    if Expiration_restante <= EXPIRATIONBATT : 
+    if Expiration_restante <= EXPIRATIONBATT : # Si la batterie est périmée
         messagebox.showwarning("Batterie expirée", f"La batterie est expirée {Expiration_restante} mois au lieu de {EXPIRATIONBATT} mois")
         return
-
     
     print("Temps restant EXP : ", Expiration_restante) 
-
-
     Cdom_now =  dt.datetime.today()
-
-    Cdom_string = lbl_batterie[24:29]
+    Cdom_string = lbl_batterie[24:29] # Information concernant le CDOM (Cell Date Of Manufacturing) 
     Cdom = dt.datetime.strptime(Cdom_string, "%m/%y")
-    Cdom_duree = (Cdom_now.year -Cdom.year )*12 + (Cdom_now.month - Cdom.month)
+    Cdom_duree = (Cdom_now.year -Cdom.year )*12 + (Cdom_now.month - Cdom.month) # Différence en mois
     print("Temps restant DOM : ", Cdom_duree)
     
-    if Cdom_duree >= CDOMBATT : 
+    if Cdom_duree >= CDOMBATT : # Si le CDOM calculé est superieur au tolérence 
         messagebox.showwarning("CDOM périmé", f"Le CDOM est périmé {Cdom_duree} mois au lieu de {CDOMBATT} mois")
         return
 
    
 
-def Generer_Etiquette():
+def Generer_Etiquette(): # Génerer les nouvelles informations de l'etiquette
     global Nouveau_SER, id_production
-    changer_etiquette = result_checkbox2.get()
+    changer_etiquette = result_checkbox2.get() #Récuperer le choix de l'utilisateur concernant le changement de SN
     print("resultat checkbox : ", changer_etiquette)
     Annee = dt.date.today()
     Annee_2digits = Annee.strftime("%y")
@@ -291,23 +289,21 @@ def Generer_Etiquette():
     id_3digits = str(id_production)[-3:]
     print("id :", id_3digits)
 
-    if changer_etiquette == 1 : 
-        print("OK")
-
-        Nouveau_SER = f"AA21{Annee_2digits}{jourdelan}{id_3digits}"
+    if changer_etiquette == 1 : # Si le choix est le changement de SN 
+        Nouveau_SER = f"AA21{Annee_2digits}{jourdelan}{id_3digits}" # Genérer le nouveau dataMatrix
         print("Nouveau_SER :", Nouveau_SER)
         Nouveau_SER = str(Nouveau_SER)
 
-def Composition_DataMatrix_Gauche():
+def Composition_DataMatrix_Gauche(): # Génerer le DataMatrix de gauche 
     global Nouveau_SER, f_case, lbl_boitier, f_case
     changer_SN= result_checkbox2.get()
     Batterie_Saisie = DataMatrix_Batterie.get().strip()
-    print(f_case)
-    if f_case is None:
+    print(f_case)# f_case et f_boxright sont des variables récuperer dans la table t_product cf connect_t_products.py
+    if f_case is None: 
         print("Aucun résultat SQL")
         return
     # Transformer f_case en string pour le modifier 
-    f_case = str(f_case[0])
+    f_case = str(f_case[0]) 
     Nouveau_SER = str(Nouveau_SER)
     Old_SER = lbl_boitier[:12]
     Annee = dt.date.today()
@@ -315,7 +311,7 @@ def Composition_DataMatrix_Gauche():
     an = Annee.strftime("%Y")
     csn = lbl_boitier[24:30]
     ed = Batterie_Saisie[31:38]
-
+    # f_case est récupérer sous format brut 
     # Enlever les caractères indésirable hors resultat souhaité              
     f_case = f_case.replace("(", "") 
     f_case = f_case.replace(")", "")
@@ -324,7 +320,8 @@ def Composition_DataMatrix_Gauche():
     print(f_case)
     # Dans le cas où on change le SN
     if changer_SN == 1 :
-        f_case = f_case.replace("AA21%YY%%DDD%%NNN%",Nouveau_SER)
+        # Remplacer le squelette de f_case par les informations de la balise
+        f_case = f_case.replace("AA21%YY%%DDD%%NNN%",Nouveau_SER)  
         f_case = f_case.replace("%MM%", mois)
         f_case = f_case.replace("%YYYY%", an)
         f_case = f_case.replace("%CSN%", csn)
@@ -338,10 +335,11 @@ def Composition_DataMatrix_Gauche():
         f_case = f_case.replace("%ED%", ed) 
         print("OLD DataM Gauche :",f_case)
 
-def Composition_DataMatrix_Droite(): 
+def Composition_DataMatrix_Droite(): # Générer le DataMatrix de droite 
     global lbl_batterie,lbl_carte,f_boxright
     Batterie_Saisie = DataMatrix_Batterie.get().strip()
     Carte_Saisie = DataMatrix_Carte.get().strip()
+    # Définir des variables de f_boxright
     psn = Carte_Saisie.split(";")[0]
     ppn = Carte_Saisie.split(";")[3][:14]
     psw = Carte_Saisie.split(";")[1][11:21]
@@ -354,12 +352,12 @@ def Composition_DataMatrix_Droite():
     if f_boxright is None:
         print("Aucun résultat SQL")
         return
-
     f_boxright = str(f_boxright[0])
     f_boxright = f_boxright.replace("(", "") 
     f_boxright = f_boxright.replace(")", "")
     f_boxright = f_boxright.replace(",", "") 
     f_boxright = f_boxright.replace("'", "")
+    # Remplacer le squelette de f_boxright par les informations de la balise
     f_boxright = f_boxright.replace("%PSN%", psn)
     f_boxright = f_boxright.replace("%PPN%", ppn)
     f_boxright = f_boxright.replace("%PSW%", psw)
@@ -370,7 +368,7 @@ def Composition_DataMatrix_Droite():
     f_boxright = f_boxright.replace("%EXP%", exp)
     print("DataMDroite",f_boxright)
 
-def Recherche_Infos_DataMatrix():
+def Recherche_Infos_DataMatrix(): # Recherche des infos importantes dans le DataMatrix de gauche 
     global pnr_datam, ser_datam, csn_datam, f_case
        
     csn_datam = f_case[24:30]
@@ -380,25 +378,21 @@ def Recherche_Infos_DataMatrix():
     pnr_datam = f_case[42:53]
     print("PNR :", pnr_datam)
 
-def Recherche_Infos_SKELETON(): 
+def Recherche_Infos_SKELETON(): # Modifier le fichier prn à partir du skeleton 
     global id_production, f_boxright, f_case, fichier_copie
     global pnr_skeleton, pnr_datam, ser_skeleton, ser_datam, CSN_skeleton, csn_datam, datamdroite_skeleton,datamgauche_skeleton
     
     date = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-    nom_fichier_Sauvegarder = f"Tauceti_{id_production}_{date}.prn"
-
-
+    nom_fichier_Sauvegarder = f"Tauceti_{id_production}_{date}.prn" # Nom du fichier à sauvegarder 
     fichiersauvegarder = os.path.join(FICHIER_PRN_BALISE, nom_fichier_Sauvegarder)
-    fichier_copie = shutil.copyfile(FICHIER_PRN_SKELETON, fichiersauvegarder)
-
+    fichier_copie = shutil.copyfile(FICHIER_PRN_SKELETON, fichiersauvegarder) # Copier le SKELETON sous un nouveau nom
     with open(fichier_copie, "r") as fichier:
         contenu = fichier.read()
-
     nouveau_contenu = contenu
     
     # PNR 
     for ligne in contenu.splitlines():
-        if PNR_SKELETON in ligne:
+        if PNR_SKELETON in ligne: # Remplacer dans le skeleton le %PNR% par le PNR de la balise
             pnr_skeleton = re.search(r"\^FD(.+?)\^FS", ligne).group(1)
             print("PNR :", pnr_skeleton)
             nouveau_contenu = nouveau_contenu.replace(pnr_skeleton, pnr_datam)
@@ -437,23 +431,52 @@ def Recherche_Infos_SKELETON():
     with open(fichier_copie, "w") as fichier:
         fichier.write(nouveau_contenu)
     print("nouveau :", fichier_copie)
+    # Ecrire le contenu dans le fichier 
     
 
 
-def Impression():
-    global fichier_copie
+def Impression(): # Imprimer l'étiquette 
+    global fichier_copie, impression_reussi, f_case
+    try : 
+        # Remplacement du placeholder
+        printerArgFinal = PRINTERARG.replace("%LBL%", fichier_copie)
+        # Découpage des arguments car il y'a 2 commandes à envoyer 
+        args = shlex.split(printerArgFinal)
+        print_process = subprocess.Popen([PRINTEREXE] + args,shell=False)
+        print_process.wait()
+        impression_reussi = True
+    except Exception as e :
+        print("Erreur d'impression : ", e)
+        messagebox.showerror("Problème d'impression")
+    if impression_reussi == True : 
+        messagebox.showinfo("impression_reussi", "Balise sauvegardée")
+        try : 
+            db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
+            cursor = db.cursor()
+            # Inserer une nouvelle ligne dans la table t_print 
+            cursor.execute("INSERT INTO t_print (lblboitier, mode) VALUES ('" + str(f_case) + "', 'REPARATION')")
+            db.commit()
+            print("Carte saisie différente de lbl-carte")
+            print('Les commandes sont faites')         
+        except Exception as e:
+            print("Erreur lors de la connexion à la base de données : ", e)
+    else :  
+        messagebox.showinfo("Problème d'impression ", "Appelez le resposable de la ligne")
+        return 
 
-    # Remplacement du placeholder
-    printerArgFinal = PRINTERARG.replace("%LBL%", fichier_copie)
-
-    # Découpage CORRECT des arguments
-    args = shlex.split(printerArgFinal)
-
-    print_process = subprocess.Popen([PRINTEREXE] + args,shell=False)
-    print_process.wait()
+def Reset() : 
+    Frame_Scan.place_forget()
+    Frame_Scan_Boitier.place(x=0, y=0, relwidth=1, relheight=1)
+    DataMatrix_Boitier_Entry.delete(0,END)
 
 
-def Valider_Modification():
+
+    
+    
+    
+
+
+def Valider_Modification(): # Fonction génrérale qui regroupe toutes les actions à réaliser pour valider la balise 
 
     global CARACTERE_BATTERIE_MAX, DataMatrix_Batterie_Entry, CARACTERE_CARTE_MAX,DataMatrix_Carte_Entry, lbl_carte,lbl_boitier,lbl_batterie,id_production, date_table,matricule_table, type_produit, status, id_user
     
@@ -463,8 +486,6 @@ def Valider_Modification():
     Carte_Saisie = DataMatrix_Carte.get().strip()
     Batterie_Saisie = DataMatrix_Batterie.get().strip()
    
-    
-     
     if Carte_Saisie =="" or DataMatrix_Carte_Entry.cget("fg") == "red":
         messagebox.showerror("Erreur", "Veuillez revérifier le DataMatrix de la carte.")
         return 
@@ -474,7 +495,7 @@ def Valider_Modification():
     Generer_Etiquette()
     Composition_DataMatrix_Gauche()
     Composition_DataMatrix_Droite()
-    if Carte_Saisie != lbl_carte and Batterie_Saisie != lbl_batterie : 
+    if Carte_Saisie != lbl_carte and Batterie_Saisie != lbl_batterie :  # Si la carte et la batterie ont été changées  
         try : 
             db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
             insert = db.cursor()
@@ -490,7 +511,7 @@ def Valider_Modification():
                 print("Erreur lors de la connexion à la base de données : ", e)
     
     
-    elif Carte_Saisie != lbl_carte : 
+    elif Carte_Saisie != lbl_carte : # Si la carte est changée
         try : 
             db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
             cursor = db.cursor()
@@ -504,7 +525,7 @@ def Valider_Modification():
         except Exception as e:
             print("Erreur lors de la connexion à la base de données : ", e)
 
-    elif Batterie_Saisie != lbl_batterie : 
+    elif Batterie_Saisie != lbl_batterie : # Si la batterie est changée 
         try : 
             db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
             cursor = db.cursor()
@@ -520,7 +541,7 @@ def Valider_Modification():
             
 
 
-    elif Carte_Saisie == lbl_carte and Batterie_Saisie == lbl_batterie : 
+    elif Carte_Saisie == lbl_carte and Batterie_Saisie == lbl_batterie : # Si aucun changement 
         try : 
             db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
             insert = db.cursor()
@@ -535,6 +556,8 @@ def Valider_Modification():
     Recherche_Infos_DataMatrix()
     Recherche_Infos_SKELETON()
     Impression()
+    Reset()
+
 
 
 App_Scan = Tk()
