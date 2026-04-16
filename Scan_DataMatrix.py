@@ -14,7 +14,7 @@ from connect_t_users import *
 from connect_t_production import * 
 from connect_t_products import *
 import subprocess
-
+import csv
 
 
 def resource_path(relative_path):
@@ -53,6 +53,8 @@ CSN_SKELETON = config['LABEL']['CSN'] # %CSN%
 PRINTERARG = config['LABEL']['PrinterArg'] 
 PRINTEREXE = config['LABEL']['PrinterExe'] 
 
+CSV_REPARATION = config['LOGGING']['RepDir'] 
+
 nom_trouve_BDD = None
 BDD_matricule = None
 id_user =None
@@ -85,6 +87,8 @@ csn_datam = None
 fichier_copie = None
 impression_reussi = False
 
+aujourdhui = None
+
 def MATRICULE_SAISIE(): # Vérification des caractères du matricule 
     global CARACTERE_MATRICULE_MAX, Matricule_saisie
     Matricule = Infos_Matricule.get().strip()
@@ -100,7 +104,6 @@ def BATTERIE_saisie() : # Verification de la longueur de la chaîne saisie pour 
         DataMatrix_Batterie_Entry.config(fg="green")
     else:
         DataMatrix_Batterie_Entry.config(fg="red")
-    
 
 def CARTE_Saisie() : # Verification de la longueur de la chaîne saisie pour la carte
     global  CARACTERE_CARTE_MAX,DataMatrix_Carte_Entry
@@ -117,8 +120,6 @@ def Boitier_Saisie() : # Verification de la longueur de la chaîne saisie pour l
         DataMatrix_Boitier_Entry.config(fg="green")
     else : 
         DataMatrix_Boitier_Entry.config(fg="red")
-
-
 
 def Afficher_Matricule_Nom(): # Vérification de la présence du matricule dans la BDD
     global nom_trouve_BDD, BDD_matricule, Matricule_trouve, nom_trouve, prenom, nom, right, id_user
@@ -146,7 +147,6 @@ def Afficher_Matricule_Nom(): # Vérification de la présence du matricule dans 
             Nom_utilisateur_title_scan.config(text=f"Nom : {nom}")
             Prenom_utilisateur_title_scan.config(text=f"Prénom : {prenom}")
             Matricule_trouve_title_scan.config(text=f"Matricule : {BDD_matricule}")  # Pour la frame batterie + carte infos matriculeAA2125265913;   09/2025 477685 02/2033;B ;S1863521-03B   ; 
-
 
             # Vérification des droits
             Droit_Matricule = int(i[3])
@@ -183,7 +183,6 @@ def Changer_la_taille_de_la_fenetre(): # Fonction pour changer la taille de la f
     y = (longueur_ecran/2) - (longueur/2)
     App_Scan.geometry('%dx%d+%d+%d' % (largeur, longueur, x, y))
 
-    
 def Afficher_Frame_Boitier() : # Afficher la frame boitier 
     Afficher_Matricule_Nom()
     if nom_trouve and Matricule_trouve : # Si le nom et le matricule sont trouvés dans la base de données.
@@ -233,11 +232,9 @@ def Scan_Boitier() :  # Recheche du boîtier dans la base de données
         boitier_trouve = True
         messagebox.showinfo("Balise trouvée !",f"Balise présente dans la base id : {id_production}")
           
-    
     LabelBoitierAffichage = lbl_boitier[:12]
     LabelBoitierAffichage_title.config(text=f"Vous êtes sur la balise : {LabelBoitierAffichage}") # Afficher le SERIAL NUMBER sur la frame scanner carte batterie
     
-
 def Afficher_frame_scan_batterie_carte(): #Afficher la frame carte batterie 
     global id_production, DataMatrix_Boitier_Entry
     Boitier_saisie = DataMatrix_Boitier.get().strip()
@@ -246,9 +243,9 @@ def Afficher_frame_scan_batterie_carte(): #Afficher la frame carte batterie
         return
     Scan_Boitier()
     if boitier_trouve and  id_production != None :  #Si le SN boitier est trouver et id n'est pas vide 
+        Frame_Scan_Boitier.place_forget()
         Frame_Scan.tkraise()
         Changer_la_taille_de_la_fenetre()
-
 
 def Verif_Infos_Batt(): # Vérifier si la batterie n'est pas périmée 
     global  EXPIRATIONBATT,CDOMBATT, lbl_batterie
@@ -259,7 +256,6 @@ def Verif_Infos_Batt(): # Vérifier si la batterie n'est pas périmée
     Expiration_Batt = dt.datetime.strptime(Expiration_String, "%m/%Y")
     print("Expiration de la batterie :", Expiration_Batt)
     Expiration_restante = (Expiration_Batt.year - Expiration_now.year) * 12 + (Expiration_Batt.month - Expiration_now.month) # Différence en mois
-
 
     if Expiration_restante <= EXPIRATIONBATT : # Si la batterie est périmée
         messagebox.showwarning("Batterie expirée", f"La batterie est expirée {Expiration_restante} mois au lieu de {EXPIRATIONBATT} mois")
@@ -274,9 +270,7 @@ def Verif_Infos_Batt(): # Vérifier si la batterie n'est pas périmée
     
     if Cdom_duree >= CDOMBATT : # Si le CDOM calculé est superieur au tolérence 
         messagebox.showwarning("CDOM périmé", f"Le CDOM est périmé {Cdom_duree} mois au lieu de {CDOMBATT} mois")
-        return
-
-   
+        return                                  
 
 def Generer_Etiquette(): # Génerer les nouvelles informations de l'etiquette
     global Nouveau_SER, id_production
@@ -464,21 +458,22 @@ def Impression(): # Imprimer l'étiquette
         messagebox.showinfo("Problème d'impression ", "Appelez le resposable de la ligne")
         return 
 
-def Reset() : 
-    Frame_Scan.place_forget()
-    Frame_Scan_Boitier.place(x=0, y=0, relwidth=1, relheight=1)
-    DataMatrix_Boitier_Entry.delete(0,END)
-
-
-
-    
-    
-    
-
-
+def EcrituredansCSV():
+    global id_user, id_production, aujourdhui
+    global lbl_carte, lbl_batterie, lbl_boitier, csn_datam
+    global type_produit, impression_reussi
+    aujourdhui = aujourdhui.replace("-", "/") #pour que la date soit sous format YYYY/MM/DD
+    type_produit = int(type_produit) # Pour eviter de le mettre entre guillemet dans le csv
+    with open(CSV_REPARATION, "a", newline="", encoding="utf-8") as fichier:
+        writer = csv.writer(fichier, delimiter=";", quotechar='"', quoting=csv.QUOTE_NONNUMERIC) # QUOTE_NONNUMERIC permet de mettre entre guillemet la date dans le csv
+        writer.writerow([id_production, id_user, aujourdhui,
+                         lbl_carte, lbl_batterie, lbl_boitier,
+                         "", type_produit, 1])
+        
+        
 def Valider_Modification(): # Fonction génrérale qui regroupe toutes les actions à réaliser pour valider la balise 
 
-    global CARACTERE_BATTERIE_MAX, DataMatrix_Batterie_Entry, CARACTERE_CARTE_MAX,DataMatrix_Carte_Entry, lbl_carte,lbl_boitier,lbl_batterie,id_production, date_table,matricule_table, type_produit, status, id_user
+    global CARACTERE_BATTERIE_MAX, DataMatrix_Batterie_Entry, CARACTERE_CARTE_MAX,DataMatrix_Carte_Entry, lbl_carte,lbl_boitier,lbl_batterie,id_production, date_table,matricule_table, type_produit, status, id_user, aujourdhui
     
     Verif_Infos_Batt()
     aujourdhui= dt.datetime.today().strftime('%Y-%m-%d %H:%M:%S') 
@@ -556,8 +551,7 @@ def Valider_Modification(): # Fonction génrérale qui regroupe toutes les actio
     Recherche_Infos_DataMatrix()
     Recherche_Infos_SKELETON()
     Impression()
-    Reset()
-
+    EcrituredansCSV()
 
 
 App_Scan = Tk()
