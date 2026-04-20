@@ -8,11 +8,9 @@ from tkinter import *
 from tkinter import messagebox
 from customtkinter import *
 import datetime as dt
-
 from zebra import Zebra
 from connect_t_users import *
 from connect_t_production import * 
-from connect_t_products import *
 import subprocess
 import csv
 
@@ -57,7 +55,7 @@ CSV_REPARATION = config['LOGGING']['RepDir']
 
 nom_trouve_BDD = None
 BDD_matricule = None
-id_user =None
+id_user = None
 prenom = None
 nom = None
 right = None
@@ -88,7 +86,9 @@ fichier_copie = None
 impression_reussi = False
 
 aujourdhui = None
-
+f_case_final = None
+f_boxright_final = None
+f_boxright = None
 def MATRICULE_SAISIE(): # Vérification des caractères du matricule 
     global CARACTERE_MATRICULE_MAX, Matricule_saisie
     Matricule = Infos_Matricule.get().strip()
@@ -157,6 +157,7 @@ def Afficher_Matricule_Nom(): # Vérification de la présence du matricule dans 
                 messagebox.showinfo("Matricule", f"Matricule : {i[1]} \n Nom : {i[2]}")
                 Matricule_trouve = True
                 nom_trouve = True
+                Frame_Matricule.place_forget()
                 break
 
     if not Matricule_trouve:
@@ -188,11 +189,22 @@ def Afficher_Frame_Boitier() : # Afficher la frame boitier
     if nom_trouve and Matricule_trouve : # Si le nom et le matricule sont trouvés dans la base de données.
         Frame_Scan_Boitier.tkraise() # Afficher la frame pour scanner les balises
         Changer_la_taille_de_la_fenetre_Boitier()
+        DataMatrix_Boitier_Entry.focus()
     else:
         messagebox.showerror("Erreur", "Veuillez entrer un matricule valide") 
-
+def Afficher_Frame_Scan():
+    Frame_Matricule.place_forget()
+    Frame_Scan_Boitier.place_forget()
+    Frame_Scan.place(x=0, y=0, relwidth=1, relheight=1)
+    Frame_Scan.tkraise()
+    Changer_la_taille_de_la_fenetre()
+    DataMatrix_Batterie_Entry.delete(0,END)
+    DataMatrix_Carte_Entry.delete(0,END)
+    DataMatrix_Carte_Entry.focus()
 def Scan_Boitier() :  # Recheche du boîtier dans la base de données 
     global boitier_trouve, id_production, LabelBoitierAffichage, lbl_carte, lbl_batterie, lbl_boitier, matricule_table,date_table, type_produit, status
+    boitier_trouve = False
+    id_production = None
     Balise_scannee = DataMatrix_Boitier.get().strip()
     print("Balise scannée :", Balise_scannee)
         
@@ -243,9 +255,8 @@ def Afficher_frame_scan_batterie_carte(): #Afficher la frame carte batterie
         return
     Scan_Boitier()
     if boitier_trouve and  id_production != None :  #Si le SN boitier est trouver et id n'est pas vide 
-        Frame_Scan_Boitier.place_forget()
-        Frame_Scan.tkraise()
-        Changer_la_taille_de_la_fenetre()
+        Afficher_Frame_Scan()
+        
 
 def Verif_Infos_Batt(): # Vérifier si la batterie n'est pas périmée 
     global  EXPIRATIONBATT,CDOMBATT, lbl_batterie
@@ -263,7 +274,7 @@ def Verif_Infos_Batt(): # Vérifier si la batterie n'est pas périmée
     
     print("Temps restant EXP : ", Expiration_restante) 
     Cdom_now =  dt.datetime.today()
-    Cdom_string = lbl_batterie[24:29] # Information concernant le CDOM (Cell Date Of Manufacturing) 
+    Cdom_string = Batterie_Saisie[24:29] # Information concernant le CDOM (Cell Date Of Manufacturing) 
     Cdom = dt.datetime.strptime(Cdom_string, "%m/%y")
     Cdom_duree = (Cdom_now.year -Cdom.year )*12 + (Cdom_now.month - Cdom.month) # Différence en mois
     print("Temps restant DOM : ", Cdom_duree)
@@ -289,7 +300,7 @@ def Generer_Etiquette(): # Génerer les nouvelles informations de l'etiquette
         Nouveau_SER = str(Nouveau_SER)
 
 def Composition_DataMatrix_Gauche(): # Génerer le DataMatrix de gauche 
-    global Nouveau_SER, f_case, lbl_boitier, f_case
+    global Nouveau_SER, lbl_boitier, f_case, f_case_final
     changer_SN= result_checkbox2.get()
     Batterie_Saisie = DataMatrix_Batterie.get().strip()
     print(f_case)# f_case et f_boxright sont des variables récuperer dans la table t_product cf connect_t_products.py
@@ -297,7 +308,7 @@ def Composition_DataMatrix_Gauche(): # Génerer le DataMatrix de gauche
         print("Aucun résultat SQL")
         return
     # Transformer f_case en string pour le modifier 
-    f_case = str(f_case[0]) 
+    f_case_final= str(f_case[0]) 
     Nouveau_SER = str(Nouveau_SER)
     Old_SER = lbl_boitier[:12]
     Annee = dt.date.today()
@@ -307,30 +318,31 @@ def Composition_DataMatrix_Gauche(): # Génerer le DataMatrix de gauche
     ed = Batterie_Saisie[31:38]
     # f_case est récupérer sous format brut 
     # Enlever les caractères indésirable hors resultat souhaité              
-    f_case = f_case.replace("(", "") 
-    f_case = f_case.replace(")", "")
-    f_case = f_case.replace(",", "")
-    f_case = f_case.replace("'", "")
+    f_case_final = f_case_final.replace("(", "") 
+    f_case_final = f_case_final.replace(")", "")
+    f_case_final = f_case_final.replace(",", "")
+    f_case_final = f_case_final.replace("'", "")
     print(f_case)
+    print(f_case_final)
     # Dans le cas où on change le SN
     if changer_SN == 1 :
         # Remplacer le squelette de f_case par les informations de la balise
-        f_case = f_case.replace("AA21%YY%%DDD%%NNN%",Nouveau_SER)  
-        f_case = f_case.replace("%MM%", mois)
-        f_case = f_case.replace("%YYYY%", an)
-        f_case = f_case.replace("%CSN%", csn)
-        f_case = f_case.replace("%ED%", ed)
-        print("New DataM Gauche :",f_case)
+        f_case_final = f_case_final.replace("AA21%YY%%DDD%%NNN%",Nouveau_SER)  
+        f_case_final = f_case_final.replace("%MM%", mois)
+        f_case_final = f_case_final.replace("%YYYY%", an)
+        f_case_final = f_case_final.replace("%CSN%", csn)
+        f_case_final = f_case_final.replace("%ED%", ed)
+        print("New DataM Gauche :",f_case_final)
     else : 
-        f_case = f_case.replace("AA21%YY%%DDD%%NNN%",Old_SER)
-        f_case = f_case.replace("%MM%", mois)
-        f_case = f_case.replace("%YYYY%", an)
-        f_case = f_case.replace("%CSN%", csn)
-        f_case = f_case.replace("%ED%", ed) 
+        f_case_final = f_case_final.replace("AA21%YY%%DDD%%NNN%",Old_SER)
+        f_case_final = f_case_final.replace("%MM%", mois)
+        f_case_final = f_case_final.replace("%YYYY%", an)
+        f_case_final = f_case_final.replace("%CSN%", csn)
+        f_case_final = f_case_final.replace("%ED%", ed) 
         print("OLD DataM Gauche :",f_case)
 
 def Composition_DataMatrix_Droite(): # Générer le DataMatrix de droite 
-    global lbl_batterie,lbl_carte,f_boxright
+    global lbl_batterie,lbl_carte,f_boxright, f_boxright_final
     Batterie_Saisie = DataMatrix_Batterie.get().strip()
     Carte_Saisie = DataMatrix_Carte.get().strip()
     # Définir des variables de f_boxright
@@ -346,36 +358,36 @@ def Composition_DataMatrix_Droite(): # Générer le DataMatrix de droite
     if f_boxright is None:
         print("Aucun résultat SQL")
         return
-    f_boxright = str(f_boxright[0])
-    f_boxright = f_boxright.replace("(", "") 
-    f_boxright = f_boxright.replace(")", "")
-    f_boxright = f_boxright.replace(",", "") 
-    f_boxright = f_boxright.replace("'", "")
+    f_boxright_final = str(f_boxright[0])
+    f_boxright_final = f_boxright_final.replace("(", "") 
+    f_boxright_final = f_boxright_final.replace(")", "")
+    f_boxright_final = f_boxright_final.replace(",", "") 
+    f_boxright_final = f_boxright_final.replace("'", "")
     # Remplacer le squelette de f_boxright par les informations de la balise
-    f_boxright = f_boxright.replace("%PSN%", psn)
-    f_boxright = f_boxright.replace("%PPN%", ppn)
-    f_boxright = f_boxright.replace("%PSW%", psw)
-    f_boxright = f_boxright.replace("%BSN%", bsn)
-    f_boxright = f_boxright.replace("%BPN%", bpn)
-    f_boxright = f_boxright.replace("%CDOM%", cdom)
-    f_boxright = f_boxright.replace("%DOM%", dom)
-    f_boxright = f_boxright.replace("%EXP%", exp)
-    print("DataMDroite",f_boxright)
-
+    f_boxright_final = f_boxright_final.replace("%PSN%", psn)
+    f_boxright_final = f_boxright_final.replace("%PPN%", ppn)
+    f_boxright_final = f_boxright_final.replace("%PSW%", psw)
+    f_boxright_final = f_boxright_final.replace("%BSN%", bsn)
+    f_boxright_final = f_boxright_final.replace("%BPN%", bpn)
+    f_boxright_final = f_boxright_final.replace("%CDOM%", cdom)
+    f_boxright_final = f_boxright_final.replace("%DOM%", dom)
+    f_boxright_final = f_boxright_final.replace("%EXP%", exp)
+    print("DataMDroite",f_boxright_final)
+    
 def Recherche_Infos_DataMatrix(): # Recherche des infos importantes dans le DataMatrix de gauche 
     global pnr_datam, ser_datam, csn_datam, f_case
        
-    csn_datam = f_case[24:30]
+    csn_datam = f_case_final[24:30]
     print("CSN :", csn_datam)
-    ser_datam = f_case[:12]
+    ser_datam = f_case_final[:12]
     print("SER :", ser_datam)
-    pnr_datam = f_case[42:53]
+    pnr_datam = f_case_final[42:53]
     print("PNR :", pnr_datam)
 
 def Recherche_Infos_SKELETON(): # Modifier le fichier prn à partir du skeleton 
-    global id_production, f_boxright, f_case, fichier_copie
+    global id_production, fichier_copie, f_case_final, f_boxright_final
     global pnr_skeleton, pnr_datam, ser_skeleton, ser_datam, CSN_skeleton, csn_datam, datamdroite_skeleton,datamgauche_skeleton
-    
+    print("DEBUG f_boxright_final :", f_boxright_final)
     date = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
     nom_fichier_Sauvegarder = f"Tauceti_{id_production}_{date}.prn" # Nom du fichier à sauvegarder 
     fichiersauvegarder = os.path.join(FICHIER_PRN_BALISE, nom_fichier_Sauvegarder)
@@ -412,14 +424,15 @@ def Recherche_Infos_SKELETON(): # Modifier le fichier prn à partir du skeleton
     for ligne in contenu.splitlines():
         if DATAM_GAUCHE_SKELETON in ligne:
             datamgauche_skeleton = re.search(r"\^FD(.+?)\^FS", ligne).group(1)
-            nouveau_contenu = nouveau_contenu.replace(datamgauche_skeleton, f_case)
+            nouveau_contenu = nouveau_contenu.replace(datamgauche_skeleton, f_case_final)
             break
+
 
     # DATAMATRIX DROITE 
     for ligne in contenu.splitlines():
         if DATAM_DROITE_SKELETON in ligne:
             datamdroite_skeleton = re.search(r"\^FD(.+?)\^FS", ligne).group(1)
-            nouveau_contenu = nouveau_contenu.replace(datamdroite_skeleton, f_boxright)
+            nouveau_contenu = nouveau_contenu.replace(datamdroite_skeleton, f_boxright_final)
             break
     
     with open(fichier_copie, "w") as fichier:
@@ -430,7 +443,7 @@ def Recherche_Infos_SKELETON(): # Modifier le fichier prn à partir du skeleton
 
 
 def Impression(): # Imprimer l'étiquette 
-    global fichier_copie, impression_reussi, f_case
+    global fichier_copie, impression_reussi, f_case_final
     try : 
         # Remplacement du placeholder
         printerArgFinal = PRINTERARG.replace("%LBL%", fichier_copie)
@@ -448,7 +461,7 @@ def Impression(): # Imprimer l'étiquette
             db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
             cursor = db.cursor()
             # Inserer une nouvelle ligne dans la table t_print 
-            cursor.execute("INSERT INTO t_print (lblboitier, mode) VALUES ('" + str(f_case) + "', 'REPARATION')")
+            cursor.execute("INSERT INTO t_print (lblboitier, mode) VALUES ('" + str(f_case_final) + "', 'REPARATION')")
             db.commit()
             print("Carte saisie différente de lbl-carte")
             print('Les commandes sont faites')         
@@ -470,14 +483,48 @@ def EcrituredansCSV():
                          lbl_carte, lbl_batterie, lbl_boitier,
                          "", type_produit, 1])
         
-        
+def Reset(): 
+    global boitier_trouve, id_production, LabelBoitierAffichage, lbl_carte, lbl_boitier, lbl_batterie, date_table, type_produit, status, matricule_table
+    Frame_Scan.place_forget()
+    Changer_la_taille_de_la_fenetre_Boitier()
+    Frame_Scan_Boitier.place(x=0, y=0, relwidth=1, relheight=1)
+    boitier_trouve = False 
+    id_production = None
+    LabelBoitierAffichage = None
+    lbl_batterie = None
+    lbl_boitier = None
+    lbl_carte = None
+    date_table = None
+    type_produit = None
+    status = None 
+    matricule_table = None 
+    DataMatrix_Boitier_Entry.delete(0,END)
+    DataMatrix_Boitier_Entry.focus()
+
 def Valider_Modification(): # Fonction génrérale qui regroupe toutes les actions à réaliser pour valider la balise 
 
-    global CARACTERE_BATTERIE_MAX, DataMatrix_Batterie_Entry, CARACTERE_CARTE_MAX,DataMatrix_Carte_Entry, lbl_carte,lbl_boitier,lbl_batterie,id_production, date_table,matricule_table, type_produit, status, id_user, aujourdhui
+    global CARACTERE_BATTERIE_MAX, DataMatrix_Batterie_Entry, CARACTERE_CARTE_MAX,DataMatrix_Carte_Entry,f_case, f_boxright
+    global lbl_carte,lbl_boitier,lbl_batterie,id_production, date_table,matricule_table, type_produit, status, id_user, aujourdhui
+    try : 
+        db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
+        cursor = db.cursor()
+        # Selectionner f_case dans la table 
+        cursor.execute("SELECT f_case FROM t_products") 
+        f_case = cursor.fetchall()  # Récupère TOUS les résultats dans la base
+        print(f_case)
+        cursor2 = db.cursor()
+        cursor2.execute("SELECT f_boxright FROM t_products")
+        f_boxright = cursor2.fetchall()
+        print(f_case)
+        # f_boxright et f_case sont des listes de toutes les valeurs 
+        # elles sont appélées dans le sript Scan_DataMatrix.py
+    except Exception as e:
+        print("Erreur lors de la connexion à la base de données : ", e)
+        f_case = []
+        f_boxright = []
     
     Verif_Infos_Batt()
     aujourdhui= dt.datetime.today().strftime('%Y-%m-%d %H:%M:%S') 
-
     Carte_Saisie = DataMatrix_Carte.get().strip()
     Batterie_Saisie = DataMatrix_Batterie.get().strip()
    
@@ -504,7 +551,7 @@ def Valider_Modification(): # Fonction génrérale qui regroupe toutes les actio
             Batterie_Saisie = lbl_batterie
         except Exception as e:
                 print("Erreur lors de la connexion à la base de données : ", e)
-    
+
     
     elif Carte_Saisie != lbl_carte : # Si la carte est changée
         try : 
@@ -552,6 +599,7 @@ def Valider_Modification(): # Fonction génrérale qui regroupe toutes les actio
     Recherche_Infos_SKELETON()
     Impression()
     EcrituredansCSV()
+    Reset()
 
 
 App_Scan = Tk()
@@ -568,6 +616,9 @@ Matricule_title.place(x=10, y=30)
 Matricule_saisie = Entry(Frame_Matricule, textvariable=Infos_Matricule, font=("Calibri", 12), width=20)
 Matricule_saisie.place(x=150, y=30)
 Matricule_saisie.bind("<KeyRelease>", lambda e: MATRICULE_SAISIE())
+Matricule_saisie.focus()
+
+
 
 Bouton_Valider = Button(Frame_Matricule, text="Valider", command=Afficher_Frame_Boitier, bg="#005DAB",font=("Arial", 12,"bold"), fg="white") 
 Bouton_Valider.place(x=300, y=65)
@@ -598,6 +649,7 @@ DataMatrix_Boitier_label.place(x=10, y=80)
 DataMatrix_Boitier_Entry = Entry(Frame_Scan_Boitier, textvariable=DataMatrix_Boitier, font=("Calibri", 12), width=58)
 DataMatrix_Boitier_Entry.place(x=10, y=110)
 DataMatrix_Boitier_Entry.bind("<KeyRelease>", lambda e:Boitier_Saisie())
+
 Bouton_Valider = Button(Frame_Scan_Boitier, text="OK", command=Afficher_frame_scan_batterie_carte, bg="#005DAB",font=("Arial", 12,"bold"), fg="white") 
 Bouton_Valider.place(x=450, y=160)
 
@@ -640,7 +692,6 @@ CheckBox2.place(x=500, y=300)
 LabelBoitierAffichage_title = Label (Frame_Scan, text=f"Vous êtes sur la balise : {LabelBoitierAffichage}",font= ("Calibri", 18))
 LabelBoitierAffichage_title.place(x=200, y=20)
 Bouton_validation_final = Button(Frame_Scan, text="Valider", command=Valider_Modification, bg="#005DAB",font=("Arial", 12,"bold"), fg="white") 
-
 
 Bouton_validation_final.place(x=900, y=350)
 
