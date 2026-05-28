@@ -13,6 +13,7 @@ from connect_t_users import *
 from connect_t_production import * 
 import subprocess
 import csv
+import mysql.connector
 
 
 def resource_path(relative_path):
