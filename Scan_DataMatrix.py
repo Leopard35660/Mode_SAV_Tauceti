@@ -125,7 +125,7 @@ def Afficher_Matricule_Nom(): # Vérification de la présence du matricule dans 
     global nom_trouve_BDD, BDD_matricule, Matricule_trouve, nom_trouve, prenom, nom, right, id_user
     
     Matricule_saisie = Infos_Matricule.get().strip()
-    print("Infos Matricule", Matricule_saisie)
+    #print("Infos Matricule", Matricule_saisie)
     if not row: # Si la ligne du matricule n'est pas trouvée
         messagebox.showerror("Erreur", "Aucune donnée dans la base de données !")
         return

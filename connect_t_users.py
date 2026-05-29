@@ -26,7 +26,7 @@ try :
     #Selectionner toutes les infos de la table t_users
     cursor.execute("SELECT * FROM t_users")
     row = cursor.fetchall()  # Récupère TOUS les résultats dans la base
-    print("row", row)
+    #print("row", row)
     # row est une liste de toutes les valeurs 
     # elle est appélée dans le script Scan_DataMatrix.py
 except Exception as e:
