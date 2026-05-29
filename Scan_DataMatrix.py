@@ -378,18 +378,18 @@ def Recherche_Infos_DataMatrix(): # Recherche des infos importantes dans le Data
     global pnr_datam, ser_datam, csn_datam, f_case
        
     csn_datam = f_case_final[24:30]
-    print("CSN :", csn_datam)
+    #print("CSN :", csn_datam)
     ser_datam = f_case_final[:12]
-    print("SER :", ser_datam)
+    #print("SER :", ser_datam)
     pnr_datam = f_case_final[42:53]
-    print("PNR :", pnr_datam)
+    #print("PNR :", pnr_datam)
 
 def Recherche_Infos_SKELETON(): # Modifier le fichier prn à partir du skeleton 
     global id_production, fichier_copie, f_case_final, f_boxright_final
     global pnr_skeleton, pnr_datam, ser_skeleton, ser_datam, CSN_skeleton, csn_datam, datamdroite_skeleton,datamgauche_skeleton
-    print("DEBUG f_boxright_final :", f_boxright_final)
+    #print("DEBUG f_boxright_final :", f_boxright_final)
     date = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-    nom_fichier_Sauvegarder = f"Tauceti_{id_production}_{date}.prn" # Nom du fichier à sauvegarder 
+    nom_fichier_Sauvegarder = f"SAV_TAUCETI_{id_production}_{date}.prn" # Nom du fichier à sauvegarder 
     fichiersauvegarder = os.path.join(FICHIER_PRN_BALISE, nom_fichier_Sauvegarder)
     fichier_copie = shutil.copyfile(FICHIER_PRN_SKELETON, fichiersauvegarder) # Copier le SKELETON sous un nouveau nom
     with open(fichier_copie, "r") as fichier:
@@ -400,7 +400,7 @@ def Recherche_Infos_SKELETON(): # Modifier le fichier prn à partir du skeleton
     for ligne in contenu.splitlines():
         if PNR_SKELETON in ligne: # Remplacer dans le skeleton le %PNR% par le PNR de la balise
             pnr_skeleton = re.search(r"\^FD(.+?)\^FS", ligne).group(1)
-            print("PNR :", pnr_skeleton)
+            #print("PNR :", pnr_skeleton)
             nouveau_contenu = nouveau_contenu.replace(pnr_skeleton, pnr_datam)
             break
 
@@ -408,7 +408,7 @@ def Recherche_Infos_SKELETON(): # Modifier le fichier prn à partir du skeleton
     for ligne in contenu.splitlines():
         if SER_SKELETON in ligne:
             ser_skeleton = re.search(r"\^FD(.+?)\^FS", ligne).group(1)
-            print("SER :", ser_skeleton)
+            #print("SER :", ser_skeleton)
             nouveau_contenu = nouveau_contenu.replace(ser_skeleton, ser_datam)
             break
 
@@ -416,7 +416,7 @@ def Recherche_Infos_SKELETON(): # Modifier le fichier prn à partir du skeleton
     for ligne in contenu.splitlines():
         if CSN_SKELETON in ligne:
             CSN_skeleton = re.search(r"\^FD(.+?)\^FS", ligne).group(1)
-            print("CSN :", CSN_skeleton)
+            #print("CSN :", CSN_skeleton)
             nouveau_contenu = nouveau_contenu.replace(CSN_skeleton, csn_datam)
             break
 
@@ -461,7 +461,7 @@ def Impression(): # Imprimer l'étiquette
             db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
             cursor = db.cursor()
             # Inserer une nouvelle ligne dans la table t_print 
-            cursor.execute("INSERT INTO t_print (lblboitier, mode) VALUES ('" + str(f_case_final) + "', 'REPARATION')")
+            cursor.execute("INSERT INTO t_print (lblboitier, mode) VALUES ('" + str(f_case_final) + "#', 'REPARATION')")
             db.commit()
             print("Carte saisie différente de lbl-carte")
             print('Les commandes sont faites')         
@@ -475,11 +475,13 @@ def EcrituredansCSV():
     global id_user, id_production, aujourdhui
     global lbl_carte, lbl_batterie, lbl_boitier, csn_datam
     global type_produit, impression_reussi
-    aujourdhui = aujourdhui.replace("-", "/") #pour que la date soit sous format YYYY/MM/DD
+    # Mettre la date au format DD/MM/YYYY pour le CSV
+    date = dt.datetime.strptime(aujourdhui, '%Y-%m-%d %H:%M:%S')
+    aujourdhui_csv = date.strftime('%d/%m/%Y %H:%M:%S') 
     type_produit = int(type_produit) # Pour eviter de le mettre entre guillemet dans le csv
     with open(CSV_REPARATION, "a", newline="", encoding="utf-8") as fichier:
         writer = csv.writer(fichier, delimiter=";", quotechar='"', quoting=csv.QUOTE_NONNUMERIC) # QUOTE_NONNUMERIC permet de mettre entre guillemet la date dans le csv
-        writer.writerow([id_production, id_user, aujourdhui,
+        writer.writerow([id_production, id_user, aujourdhui_csv,
                          lbl_carte, lbl_batterie, lbl_boitier,
                          "", type_produit, 1])
         
