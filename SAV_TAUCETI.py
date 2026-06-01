@@ -270,7 +270,9 @@ def Verif_Infos_Batt(): # Vérifier si la batterie n'est pas périmée
 
     if Expiration_restante <= EXPIRATIONBATT : # Si la batterie est périmée
         messagebox.showwarning("Batterie expirée", f"La batterie est expirée {Expiration_restante} mois au lieu de {EXPIRATIONBATT} mois")
-        return
+        DataMatrix_Batterie_Entry.delete(0, END)
+        DataMatrix_Batterie_Entry.focus()
+        return False
     
     print("Temps restant EXP : ", Expiration_restante) 
     Cdom_now =  dt.datetime.today()
@@ -281,7 +283,11 @@ def Verif_Infos_Batt(): # Vérifier si la batterie n'est pas périmée
     
     if Cdom_duree >= CDOMBATT : # Si le CDOM calculé est superieur au tolérence 
         messagebox.showwarning("CDOM périmé", f"Le CDOM est périmé {Cdom_duree} mois au lieu de {CDOMBATT} mois")
-        return                                  
+        DataMatrix_Batterie_Entry.delete(0, END)
+        DataMatrix_Batterie_Entry.focus()
+        return False
+    
+    return True
 
 def Generer_Etiquette(): # Génerer les nouvelles informations de l'etiquette
     global Nouveau_SER, id_production
@@ -526,7 +532,8 @@ def Valider_Modification(): # Fonction génrérale qui regroupe toutes les actio
         f_case = []
         f_boxright = []
     
-    Verif_Infos_Batt()
+    if not Verif_Infos_Batt():
+        return
     aujourdhui= dt.datetime.today().strftime('%Y-%m-%d %H:%M:%S') 
     Carte_Saisie = DataMatrix_Carte.get().strip()
     Batterie_Saisie = DataMatrix_Batterie.get().strip()
