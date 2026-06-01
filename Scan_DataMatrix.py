@@ -140,13 +140,13 @@ def Afficher_Matricule_Nom(): # Vérification de la présence du matricule dans 
             print("nom trouvé",nom_trouve_BDD)
             prenom, nom = nom_trouve_BDD.split(" ", 1) # Séparer l'espace pour le nom et prénom 
             BDD_matricule = i[1]
-            Nom_utilisateur_title.config(text=f"Nom : {nom}")
-            Prenom_utilisateur_title.config(text=f"Prénom : {prenom}")
-            Matricule_trouve_title.config(text=f"Matricule : {BDD_matricule}") # pour la frame boitier afficher les infos matricule
+            Nom_utilisateur_title.configure(text=f"Nom : {nom}")
+            Prenom_utilisateur_title.configure(text=f"Prénom : {prenom}")
+            Matricule_trouve_title.configure(text=f"Matricule : {BDD_matricule}") # pour la frame boitier afficher les infos matricule
             
-            Nom_utilisateur_title_scan.config(text=f"Nom : {nom}")
-            Prenom_utilisateur_title_scan.config(text=f"Prénom : {prenom}")
-            Matricule_trouve_title_scan.config(text=f"Matricule : {BDD_matricule}")  # Pour la frame batterie + carte infos matriculeAA2125265913;   09/2025 477685 02/2033;B ;S1863521-03B   ; 
+            Nom_utilisateur_title_scan.configure(text=f"Nom : {nom}")
+            Prenom_utilisateur_title_scan.configure(text=f"Prénom : {prenom}")
+            Matricule_trouve_title_scan.configure(text=f"Matricule : {BDD_matricule}")  # Pour la frame batterie + carte infos matriculeAA2125265913;   09/2025 477685 02/2033;B ;S1863521-03B   ; 
 
             # Vérification des droits
             Droit_Matricule = int(i[3])
@@ -178,7 +178,7 @@ def Changer_la_taille_de_la_fenetre(): # Fonction pour changer la taille de la f
     App_Scan.geometry("1000x400")
     largeur_ecran = App_Scan.winfo_screenwidth()
     longueur_ecran = App_Scan.winfo_screenheight()
-    largeur=1000
+    largeur=1200
     longueur=400
     x = (largeur_ecran/2) - (largeur/2)
     y = (longueur_ecran/2) - (longueur/2)
@@ -245,7 +245,7 @@ def Scan_Boitier() :  # Recheche du boîtier dans la base de données
         messagebox.showinfo("Balise trouvée !",f"Balise présente dans la base id : {id_production}")
           
     LabelBoitierAffichage = lbl_boitier[:12]
-    LabelBoitierAffichage_title.config(text=f"Vous êtes sur la balise : {LabelBoitierAffichage}") # Afficher le SERIAL NUMBER sur la frame scanner carte batterie
+    LabelBoitierAffichage_title.configure(text=f"Vous êtes sur la balise : {LabelBoitierAffichage}") # Afficher le SERIAL NUMBER sur la frame scanner carte batterie
     
 def Afficher_frame_scan_batterie_carte(): #Afficher la frame carte batterie 
     global id_production, DataMatrix_Boitier_Entry
@@ -443,7 +443,8 @@ def Recherche_Infos_SKELETON(): # Modifier le fichier prn à partir du skeleton
 
 
 def Impression(): # Imprimer l'étiquette 
-    global fichier_copie, impression_reussi, f_case_final
+    global fichier_copie, impression_reussi, f_case_final, lbl_carte, lbl_batterie, lbl_boitier
+    # Enlever les caractères compris entre les indices 74 et 102 inclus
     try : 
         # Remplacement du placeholder
         printerArgFinal = PRINTERARG.replace("%LBL%", fichier_copie)
@@ -461,7 +462,7 @@ def Impression(): # Imprimer l'étiquette
             db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
             cursor = db.cursor()
             # Inserer une nouvelle ligne dans la table t_print 
-            cursor.execute("INSERT INTO t_print (lblboitier, mode) VALUES ('" + str(f_case_final) + "#', 'REPARATION')")
+            cursor.execute("INSERT INTO t_print (lblboitier, mode) VALUES ('" + str(lbl_boitier) + "', 'REPARATION')")
             db.commit()
             print("Carte saisie différente de lbl-carte")
             print('Les commandes sont faites')         
@@ -605,15 +606,15 @@ def Valider_Modification(): # Fonction génrérale qui regroupe toutes les actio
 
 
 App_Scan = Tk()
-App_Scan.iconbitmap(resource_path('Images\\Asteelflash_icon.ico')) #Ajouter l'icône de l'application
+App_Scan.iconbitmap(resource_path('Images\\Safran.ico')) #Ajouter l'icône de l'application
 App_Scan.title("SAV ULTIMA") # Titre de l'application
 App_Scan.geometry("400x100") # Taille initiale de la fenêtre poue la saisie du matricule
 
-Frame_Matricule = Frame(App_Scan)
+Frame_Matricule = CTkFrame(App_Scan, fg_color="#F0F0F0")
 Frame_Matricule.place(x=0, y=0, relwidth=1, relheight=1)
 Infos_Matricule = StringVar()
 
-Matricule_title = Label(Frame_Matricule, text="Entrez votre matricule :", font=("Arial", 10)) 
+Matricule_title = CTkLabel(Frame_Matricule, text="Entrez votre matricule :", fg_color="transparent", text_color="black", font=("Arial", 13)) 
 Matricule_title.place(x=10, y=30)
 Matricule_saisie = Entry(Frame_Matricule, textvariable=Infos_Matricule, font=("Calibri", 12), width=20)
 Matricule_saisie.place(x=150, y=30)
@@ -635,18 +636,18 @@ x = (largeur_ecran/2) - (largeur/2)
 y = (longueur_ecran/2) - (longueur/2)
 App_Scan.geometry('%dx%d+%d+%d' % (largeur, longueur, x, y))
 
-Frame_Scan_Boitier = Frame(App_Scan)
+Frame_Scan_Boitier = Frame(App_Scan, bg="#F0F0F0")
 Frame_Scan_Boitier.place(x=0, y=0, relwidth=1, relheight=1)
 DataMatrix_Boitier= StringVar()
 
-Nom_utilisateur_title = Label (Frame_Scan_Boitier, text=f"Nom : {nom}",font= ("Calibri", 10))
+Nom_utilisateur_title = CTkLabel(Frame_Scan_Boitier, text=f"Nom : {nom}", fg_color="#F0F0F0", text_color="black", font=("Calibri", 13))
 Nom_utilisateur_title.place(x=400, y=10)
-Prenom_utilisateur_title = Label(Frame_Scan_Boitier, text=f"Prenom : {prenom}", font=("Calibri", 10)) 
+Prenom_utilisateur_title = CTkLabel(Frame_Scan_Boitier, text=f"Prenom : {prenom}", fg_color="#F0F0F0", text_color="black", font=("Calibri", 13))
 Prenom_utilisateur_title.place(x=382, y=30)
-Matricule_trouve_title = Label (Frame_Scan_Boitier, text=f"Matricule : {BDD_matricule}",font= ("Calibri", 10))
+Matricule_trouve_title = CTkLabel(Frame_Scan_Boitier, text=f"Matricule : {BDD_matricule}", fg_color="#F0F0F0", text_color="black", font=("Calibri", 13))
 Matricule_trouve_title.place(x=370, y=50)
 
-DataMatrix_Boitier_label = Label(Frame_Scan_Boitier, text= "Scannez le DataMatrix du boîtier : " )
+DataMatrix_Boitier_label = CTkLabel(Frame_Scan_Boitier, text="Scannez le DataMatrix du boîtier : ", fg_color="#F0F0F0", text_color="black", font=("Arial", 13))
 DataMatrix_Boitier_label.place(x=10, y=80)
 DataMatrix_Boitier_Entry = Entry(Frame_Scan_Boitier, textvariable=DataMatrix_Boitier, font=("Calibri", 12), width=58)
 DataMatrix_Boitier_Entry.place(x=10, y=110)
@@ -655,49 +656,48 @@ DataMatrix_Boitier_Entry.bind("<KeyRelease>", lambda e:Boitier_Saisie())
 Bouton_Valider = Button(Frame_Scan_Boitier, text="OK", command=Afficher_frame_scan_batterie_carte, bg="#005DAB",font=("Arial", 12,"bold"), fg="white") 
 Bouton_Valider.place(x=450, y=160)
 
-Frame_Scan = Frame(App_Scan)
+Frame_Scan = Frame(App_Scan, bg="#F0F0F0")
 Frame_Scan.place(x=0, y=0, relwidth=1, relheight=1)
 DataMatrix_Carte = StringVar()
 DataMatrix_Batterie = StringVar()
 
-Image_Asteelflash = PhotoImage(file=resource_path("Images\\Asteelflash.png"))
-Image_Asteelflash_reduite = Image_Asteelflash.subsample(3,3)
-Label_Asteelflash_image = Label(Frame_Scan, image=Image_Asteelflash_reduite)
-Label_Asteelflash_image.place(x=3, y=2)
+Image_Safran = PhotoImage(file=resource_path("Images\\Safran.png"))
+Image_Safran_reduite = Image_Safran.subsample(30,30)
+Label_Safran_image = Label(Frame_Scan, image=Image_Safran)
+Label_Safran_image.place(x=3, y=2)
 
-Image_Asteelflash_reduite_boitier = Image_Asteelflash.subsample(1,1)
-Label_Asteelflash_image_boitier = Label(Frame_Scan_Boitier, image=Image_Asteelflash_reduite)
-Label_Asteelflash_image_boitier.place(x=3, y=2)
+Image_Safran_reduite_boitier = Image_Safran.subsample(25,25)
+Label_Safran_image_boitier = Label(Frame_Scan_Boitier, image=Image_Safran_reduite_boitier)
+Label_Safran_image_boitier.place(x=3, y=2)
 
-DataMatrix_Carte_title = Label (Frame_Scan, text="CARTE :",font=("Arial", 24))
+DataMatrix_Carte_title = CTkLabel(Frame_Scan, text="CARTE :", fg_color="#F0F0F0", text_color="black", font=("Arial", 24))
 DataMatrix_Carte_title.place(x=55, y= 100)
 DataMatrix_Carte_Entry = Entry (Frame_Scan, textvariable= DataMatrix_Carte, font=("Calibri", 24), width=48)
 DataMatrix_Carte_Entry.place(x= 200, y=95)
 DataMatrix_Carte_Entry.bind("<KeyRelease>", lambda e: CARTE_Saisie())
 
-DataMatrix_Batterie_title = Label(Frame_Scan, text="BATTERIE :", font=("Arial", 24))
+DataMatrix_Batterie_title = CTkLabel(Frame_Scan, text="BATTERIE :", fg_color="#F0F0F0", text_color="black", font=("Arial", 24))
 DataMatrix_Batterie_title.place(x=10, y= 200)
 DataMatrix_Batterie_Entry = Entry(Frame_Scan, textvariable= DataMatrix_Batterie, font=("Calibri", 24), width=48)
 DataMatrix_Batterie_Entry.place(x= 200, y=195)
 DataMatrix_Batterie_Entry.bind("<KeyRelease>", lambda e: BATTERIE_saisie())
-Nom_utilisateur_title_scan = Label (Frame_Scan, text=f"Nom : {nom}",font= ("Calibri", 10))
-Nom_utilisateur_title_scan.place(x=900, y=10)
-Prenom_utilisateur_title_scan = Label(Frame_Scan, text=f"Prenom : {prenom}", font=("Calibri", 10)) 
-Prenom_utilisateur_title_scan.place(x=882, y=30)
-Matricule_trouve_title_scan = Label (Frame_Scan, text=f"Matricule : {BDD_matricule}",font= ("Calibri", 10))
-Matricule_trouve_title_scan.place(x=870, y=50)
+Nom_utilisateur_title_scan = CTkLabel(Frame_Scan, text=f"Nom : {nom}", fg_color="#F0F0F0", text_color="black", font=("Calibri", 14))
+Nom_utilisateur_title_scan.place(x=1050, y=10)
+Prenom_utilisateur_title_scan = CTkLabel(Frame_Scan, text=f"Prenom : {prenom}", fg_color="#F0F0F0", text_color="black", font=("Calibri", 14))
+Prenom_utilisateur_title_scan.place(x=1032, y=30)
+Matricule_trouve_title_scan = CTkLabel(Frame_Scan, text=f"Matricule : {BDD_matricule}", fg_color="#F0F0F0", text_color="black", font=("Calibri", 14))
+Matricule_trouve_title_scan.place(x=1020, y=50)
 
 result_checkbox2= IntVar()
 
 CheckBox2 = CTkCheckBox( Frame_Scan, text="Changer le SERIAL NUMBER", variable= result_checkbox2,font= ("Calibri", 16),text_color="black" ) # Afficher les checkbox de choix de option SN
 CheckBox2.place(x=500, y=300)
-LabelBoitierAffichage_title = Label (Frame_Scan, text=f"Vous êtes sur la balise : {LabelBoitierAffichage}",font= ("Calibri", 18))
-LabelBoitierAffichage_title.place(x=200, y=20)
+LabelBoitierAffichage_title = CTkLabel(Frame_Scan, text=f"Vous êtes sur la balise : {LabelBoitierAffichage}", fg_color="#F0F0F0", text_color="black", font=("Calibri", 20))
+LabelBoitierAffichage_title.place(x=110, y=20)
 Bouton_validation_final = Button(Frame_Scan, text="Valider", command=Valider_Modification, bg="#005DAB",font=("Arial", 12,"bold"), fg="white") 
+Bouton_validation_final.place(x=1100, y=350)
 
-Bouton_validation_final.place(x=900, y=350)
-
-App_Scan.iconbitmap(resource_path('Images\\Asteelflash_icon.ico'))
+App_Scan.iconbitmap(resource_path('Images\\Safran.ico'))
 
 Frame_Matricule.tkraise()
 App_Scan.mainloop()
