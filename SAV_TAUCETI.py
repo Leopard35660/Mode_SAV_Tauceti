@@ -1,4 +1,5 @@
 import os
+import os
 import shlex
 import shutil
 import sys
@@ -468,7 +469,7 @@ def Impression(): # Imprimer l'étiquette
             db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
             cursor = db.cursor()
             # Inserer une nouvelle ligne dans la table t_print 
-            cursor.execute("INSERT INTO t_print (lblboitier, mode) VALUES ('" + str(lbl_boitier) + "', 'REPARATION')")
+            cursor.execute("INSERT INTO t_print (lblboitier, mode) VALUES ('" + str(f_boxright_final) + "', 'REPARATION')")
             db.commit()
             print("Carte saisie différente de lbl-carte")
             print('Les commandes sont faites')         
@@ -512,7 +513,7 @@ def Reset():
 
 def Valider_Modification(): # Fonction génrérale qui regroupe toutes les actions à réaliser pour valider la balise 
 
-    global CARACTERE_BATTERIE_MAX, DataMatrix_Batterie_Entry, CARACTERE_CARTE_MAX,DataMatrix_Carte_Entry,f_case, f_boxright
+    global CARACTERE_BATTERIE_MAX, DataMatrix_Batterie_Entry, CARACTERE_CARTE_MAX,DataMatrix_Carte_Entry,f_case, f_boxright, f_boxright_final
     global lbl_carte,lbl_boitier,lbl_batterie,id_production, date_table,matricule_table, type_produit, status, id_user, aujourdhui
     try : 
         db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
@@ -553,7 +554,7 @@ def Valider_Modification(): # Fonction génrérale qui regroupe toutes les actio
             insert = db.cursor()
             insert.execute("INSERT INTO t_repair (id_production, matricule, date, lbl_carte, lbl_batterie, lbl_boitier, type_produit) ""VALUES ('" + str(id_production) + "', '" + str(id_user) + "', '" + str(date_table) + "', '" +str(lbl_carte) + "', '" + str(lbl_batterie) + "', '" + str(lbl_boitier) + "', '" + str(type_produit) + "')")
             update = db.cursor()
-            update.execute("UPDATE t_production SET date = '" + str(aujourdhui) + "',lbl_carte = '" + str(Carte_Saisie) + "' ,lbl_batterie = '" + str(Batterie_Saisie) + "' WHERE id_production = '" + str(id_production) + "'")
+            update.execute("UPDATE t_production SET date = '" + str(aujourdhui) + "',lbl_carte = '" + str(Carte_Saisie) + "' ,lbl_batterie = '" + str(Batterie_Saisie) + "' ,lbl_boitier = '" + str(f_boxright_final) +"' WHERE id_production = '" + str(id_production) + "'")
             db.commit()
             print("batterie et carte saisie saisie différente de lbl carte et batterie ")
             print('Les commandes sont faites')
@@ -569,7 +570,7 @@ def Valider_Modification(): # Fonction génrérale qui regroupe toutes les actio
             cursor = db.cursor()
             cursor.execute("INSERT INTO t_repair (id_production, matricule, date, lbl_carte, lbl_batterie, lbl_boitier, type_produit) ""VALUES ('" + str(id_production) + "', '" + str(id_user) + "', '" + str(date_table) + "', '" +str(lbl_carte) + "', '" + str(lbl_batterie) + "', '" + str(lbl_boitier) + "', '" + str(type_produit) + "')")
             update = db.cursor()
-            update.execute("UPDATE t_production SET date = '" + str(aujourdhui) + "' ,lbl_carte = '" + str(Carte_Saisie) + "' WHERE id_production = '" + str(id_production) + "'")
+            update.execute("UPDATE t_production SET date = '" + str(aujourdhui) + "' ,lbl_carte = '" + str(Carte_Saisie) + "' ,lbl_batterie = '" + str(Batterie_Saisie) + "' ,lbl_boitier = '" + str(f_boxright_final) +"' WHERE id_production = '" + str(id_production) + "'")
             db.commit()
             print("Carte saisie différente de lbl-carte")
             print('Les commandes sont faites')
@@ -583,7 +584,7 @@ def Valider_Modification(): # Fonction génrérale qui regroupe toutes les actio
             cursor = db.cursor()
             cursor.execute("INSERT INTO t_repair (id_production, matricule, date, lbl_carte, lbl_batterie, lbl_boitier, type_produit) ""VALUES ('" + str(id_production) + "', '" + str(id_user) + "', '" + str(date_table) + "', '" +str(lbl_carte) + "', '" + str(lbl_batterie) + "', '" + str(lbl_boitier) + "', '" + str(type_produit) + "')")
             update = db.cursor()
-            update.execute("UPDATE t_production SET date = '" + str(aujourdhui) + "' ,lbl_batterie = '" + str(Batterie_Saisie) + "' WHERE id_production = '" + str(id_production) + "'")
+            update.execute("UPDATE t_production SET date = '" + str(aujourdhui) + "' ,lbl_batterie = '" + str(Batterie_Saisie) + "' ,lbl_boitier = '" + str(f_boxright_final) +"' WHERE id_production = '" + str(id_production) + "'")
             db.commit()
             print("batterie saisie différente de lbl-batterie")
             print('Les commandes sont faites')
@@ -599,7 +600,7 @@ def Valider_Modification(): # Fonction génrérale qui regroupe toutes les actio
             insert = db.cursor()
             insert.execute("INSERT INTO t_repair (id_production, matricule, date, lbl_carte, lbl_batterie, lbl_boitier, type_produit) ""VALUES ('" + str(id_production) + "', '" + str(id_user) + "', '" + str(date_table) + "', '" +str(lbl_carte) + "', '" + str(lbl_batterie) + "', '" + str(lbl_boitier) + "', '" + str(type_produit) + "')")
             update = db.cursor()
-            update.execute("UPDATE t_production SET date = '" + str(aujourdhui) + "'WHERE id_production ='" + str(id_production) + "' ")
+            update.execute("UPDATE t_production SET date = '" + str(aujourdhui) + "' ,lbl_carte = '" + str(Carte_Saisie) + "' ,lbl_batterie = '" + str(Batterie_Saisie) + "' ,lbl_boitier = '" + str(f_boxright_final) +"' WHERE id_production ='" + str(id_production) + "' ")
             db.commit()
             print("batterie saisie et carte saisie identique aux labels BDD")
             print('Les commandes sont faites')
