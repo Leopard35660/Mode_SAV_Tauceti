@@ -30,12 +30,12 @@ StringFileInfo(
   StringTable(
     u'040904B0',
     [StringStruct(u'CompanyName', u'Asteelflash'),
-    StringStruct(u'FileDescription', u'Interface de regroupement ATR'),
+    StringStruct(u'FileDescription', u'Application SAV TAUCETI'),
     StringStruct(u'FileVersion', u'V1'),
-    StringStruct(u'InternalName', u'Recherche SQUELCH'),
+    StringStruct(u'InternalName', u'SAV_TAUCETI'),
     StringStruct(u'LegalCopyright', u'Copyright (c) Asteelflash'),
-    StringStruct(u'OriginalFilename', u'Recherche_SQUELCH.exe'),
-    StringStruct(u'ProductName', u'Recherche SQUELCH'),
+    StringStruct(u'OriginalFilename', u'SAV_TAUCETI.exe'),
+    StringStruct(u'ProductName', u'SAV TAUCETI'),
     StringStruct(u'ProductVersion', u'1.0.0')])
   ]),
 VarFileInfo([VarStruct(u'Translation', [1033, 1200])]) 
