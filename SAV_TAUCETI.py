@@ -210,12 +210,14 @@ def Scan_Boitier() :  # Recheche du boîtier dans la base de données
     id_production = None
     Balise_scannee = DataMatrix_Boitier.get().strip()
     print("Balise scannée :", Balise_scannee)
+    SN_Carte_scannee = Balise_scannee[:12]
+    print("SN Carte scannée :", SN_Carte_scannee)
         
     try : # Connexion à la base de données
         db = mysql.connector.connect(user =USER_DATABASE, password=PASSWORD_DATABASE, host=SERVEUR_DATABASE, database=DATABASE)
         cursor = db.cursor()
         # Trouver la ligne contenant la ligne de la balise comme commande SQL LIKE%%
-        cursor.execute("SELECT * FROM t_production WHERE lbl_boitier LIKE '%" + Balise_scannee + "%'")
+        cursor.execute("SELECT * FROM t_production WHERE lbl_boitier LIKE '%" + SN_Carte_scannee + "%' OR lbl_carte LIKE '%" + SN_Carte_scannee + "%'")
         lbl_trouve= cursor.fetchall()  # Récupère TOUS les résultats dans la base
     
     except Exception as e:
@@ -270,7 +272,9 @@ def Verif_Infos_Batt(): # Vérifier si la batterie n'est pas périmée
     Expiration_Batt = dt.datetime.strptime(Expiration_String, "%m/%Y")
     print("Expiration de la batterie :", Expiration_Batt)
     Expiration_restante = (Expiration_Batt.year - Expiration_now.year) * 12 + (Expiration_Batt.month - Expiration_now.month) # Différence en mois
-
+    print("Date d'expiration de la batterie :", Expiration_Batt.month)
+    print("Date actuelle :", Expiration_now.month)
+    print("Expiration restante en mois : ", Expiration_restante)
     if Expiration_restante <= EXPIRATIONBATT : # Si la batterie est périmée
         messagebox.showwarning("Batterie expirée", f"La batterie est expirée {Expiration_restante} mois au lieu de {EXPIRATIONBATT} mois")
         DataMatrix_Batterie_Entry.delete(0, END)
